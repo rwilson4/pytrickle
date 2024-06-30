@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "pytrickle"
+version = "0.1.0"
+description = "Testing Statistical Hypotheses in a Tree-Like Hierarchy"
+authors = ["Bob Wilson <bob.wilson@convexanalytics.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.2"
+pytest-cov = "^5.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
