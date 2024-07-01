@@ -9,6 +9,8 @@ readme = "README.md"
 python = "^3.11"
 matplotlib = "^3.9.0"
 networkx = "^3.3"
+numpy = "^2.0.0"
+scipy = "^1.14.0"
 
 
 [tool.poetry.group.dev.dependencies]
