@@ -4,6 +4,7 @@ import math
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
+import numpy as np
 from scipy import stats
 
 
@@ -77,7 +78,7 @@ class Hypothesis(ABC):
         if self.available_level is None:
             raise ValueError("`available_level` must be set before calling.")
 
-        if self.p_value() <= self.stake * self.available_level:
+        if self.pvalue() <= self.stake * self.available_level:
             self.rejected = True
         else:
             self.rejected = False
@@ -85,7 +86,7 @@ class Hypothesis(ABC):
         self.tested = True
 
     @abstractmethod
-    def p_value(self) -> float:
+    def pvalue(self) -> float:
         """Calculate p-value."""
         pass
 
@@ -112,7 +113,7 @@ class TTest(Hypothesis):
         self.n1 = n1
         self.n2 = n2
 
-    def p_value(self) -> float:
+    def pvalue(self) -> float:
         """Calculate p-value.
 
         Uses Welch's t-test to compute a two-sided p-value against the null hypothesis
@@ -122,9 +123,9 @@ class TTest(Hypothesis):
         """
         t = self._test_statistic()
         df = self._welch_satterthwaite()
-        p_value = min(1.0, 2.0 * min(stats.t.cdf(t, df=df), stats.t.sf(t, df=df)))
+        p = min(1.0, 2.0 * min(stats.t.cdf(t, df=df), stats.t.sf(t, df=df)))
 
-        return p_value
+        return p
 
     def _test_statistic(self) -> float:
         return (self.mean1 - self.mean2) / self._standard_error()
@@ -139,3 +140,33 @@ class TTest(Hypothesis):
         )
 
         return df
+
+
+class FTest(Hypothesis):
+    """Class for testing the FTest of equality of means across 2+ groups.
+
+    This can be used in a hierarchical test. Given n groups, first do F test to check
+    whether there is any difference. If this is rejected, test all pairs. We might have
+    adequate power to detect a difference exists, but insufficient power to identify
+    which one is best.
+
+    Or after FTest, compare each loser to one winner (is this permitted b/c winner
+    adaptively selected?).
+
+    """
+
+    def __init__(
+        self,
+        *samples: np.ndarray,
+        weight: float = 1.0,
+        stake: float = 1.0,
+        **kwargs: int,
+    ):
+        super().__init__(weight=weight, stake=stake)
+        self.samples = samples
+        self.kwargs = kwargs
+
+    def pvalue(self) -> float:
+        """Calculate p-value."""
+        _, p = stats.f_oneway(*self.samples, **self.kwargs)
+        return p

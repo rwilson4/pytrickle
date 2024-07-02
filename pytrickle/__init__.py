@@ -5,12 +5,13 @@ __version__ = "0.1.0"
 from typing import List
 
 from pytrickle.hierarchy import Hierarchy
-from pytrickle.hypothesis import Hypothesis, TTest
+from pytrickle.hypothesis import FTest, Hypothesis, TTest
 
 __all__: List[str] = [
     "Hypothesis",
     "Hierarchy",
     "TTest",
+    "FTest",
 ]
 
 
