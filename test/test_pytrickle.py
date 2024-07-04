@@ -137,16 +137,17 @@ class TestHierarchy:
     def test_hierarchy() -> None:
         """Test Hierarchy."""
         data = TestFTest.dataset()
-        root = FTest(*data.values())
+        root = FTest(*data.values(), name="Global Equality")
 
         for c1, c2 in itertools.combinations(data.keys(), 2):
             pair = TTest(
                 mean1=np.mean(data[c1]),
-                mean2=np.mean(data[c1]),
+                mean2=np.mean(data[c2]),
                 var1=np.var(data[c1], ddof=1),
-                var2=np.var(data[c1], ddof=1),
+                var2=np.var(data[c2], ddof=1),
                 n1=len(data[c1]),
-                n2=len(data[c1]),
+                n2=len(data[c2]),
+                name=f"{c1}\n{c2}",
             )
             root.add_child(pair)
 

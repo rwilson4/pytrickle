@@ -154,6 +154,22 @@ docs = ["ipython", "matplotlib", "numpydoc", "sphinx"]
 tests = ["pytest", "pytest-cov", "pytest-xdist"]
 
 [[package]]
+name = "eon"
+version = "1.2"
+description = "Epidemics on Networks"
+optional = false
+python-versions = "*"
+files = [
+    {file = "eon-1.2.tar.gz", hash = "sha256:cd9d1ee8069e70df342cfa1cb9d4581adceb338fa4aed976836cf21d895b7efa"},
+]
+
+[package.dependencies]
+matplotlib = "*"
+networkx = ">=2"
+numpy = "*"
+scipy = "*"
+
+[[package]]
 name = "fonttools"
 version = "4.53.0"
 description = "Tools to manipulate font files"
@@ -700,4 +716,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "52737dddaa5beb76be7a1ab7bdba2c4f6d57c6714dc832a850d8693f69be2920"
+content-hash = "7cbecc4f108853bd04846e8532a0af465d63686298d7f66cdcc32a424e02d205"

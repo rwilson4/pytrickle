@@ -2,6 +2,7 @@
 
 import math
 from abc import ABC, abstractmethod
+from functools import cache
 from typing import List, Optional
 
 import numpy as np
@@ -11,7 +12,7 @@ from scipy import stats
 class Hypothesis(ABC):
     """Abstract base class for representing a hypothesis."""
 
-    def __init__(self, weight: float = 1.0, stake: float = 1.0):
+    def __init__(self, weight: float = 1.0, stake: float = 1.0, name: Optional[str] = None):
         if weight < 0.0:
             raise ValueError("Weight must be non-negative.")
 
@@ -20,6 +21,7 @@ class Hypothesis(ABC):
 
         self.weight = weight
         self.stake = stake
+        self.name = name
         self.available_level: Optional[float] = None
         self.children: List[Hypothesis] = []
         self.tested = False
@@ -90,6 +92,21 @@ class Hypothesis(ABC):
         """Calculate p-value."""
         pass
 
+    def __repr__(self) -> str:
+        """Represent hypothesis as a string."""
+        if self.name is not None:
+            s = self.name + "\n"
+        else:
+            s = ""
+
+        if self.tested:
+            if self.rejected:
+                s += f"p={self.pvalue():.03g}"
+            else:
+                s += f"p={self.pvalue():.03g}"
+
+        return s
+
 
 class TTest(Hypothesis):
     """Test a hypothesis using Welch's t-test."""
@@ -104,8 +121,9 @@ class TTest(Hypothesis):
         n2: int,
         weight: float = 1.0,
         stake: float = 1.0,
+        name: Optional[str] = None,
     ):
-        super().__init__(weight=weight, stake=stake)
+        super().__init__(weight=weight, stake=stake, name=name)
         self.mean1 = mean1
         self.mean2 = mean2
         self.var1 = var1
@@ -113,6 +131,7 @@ class TTest(Hypothesis):
         self.n1 = n1
         self.n2 = n2
 
+    @cache
     def pvalue(self) -> float:
         """Calculate p-value.
 
@@ -160,12 +179,14 @@ class FTest(Hypothesis):
         *samples: np.ndarray,
         weight: float = 1.0,
         stake: float = 1.0,
+        name: Optional[str] = None,
         **kwargs: int,
     ):
-        super().__init__(weight=weight, stake=stake)
+        super().__init__(weight=weight, stake=stake, name=name)
         self.samples = samples
         self.kwargs = kwargs
 
+    @cache
     def pvalue(self) -> float:
         """Calculate p-value."""
         _, p = stats.f_oneway(*self.samples, **self.kwargs)

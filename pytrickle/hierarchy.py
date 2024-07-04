@@ -2,6 +2,7 @@
 
 import matplotlib.pyplot as plt
 import networkx as nx
+from EoN.auxiliary import hierarchy_pos
 
 from pytrickle.hypothesis import Hypothesis
 
@@ -41,26 +42,37 @@ class Hierarchy:
         """Visualize testing results."""
         G = nx.DiGraph()
         labels = {}
+        colors = {}
 
-        def add_nodes_edges(hypothesis, parent=None):
+        def add_nodes_edges(hypothesis, parent=None, level=0, pos=None, horizontal_idx=0):
             G.add_node(hypothesis)
-            labels[hypothesis] = "R" if hypothesis.rejected else "NR"
+            labels[hypothesis] = repr(hypothesis)
+            colors[hypothesis] = "skyblue" if hypothesis.rejected else "orange"
             if parent:
                 G.add_edge(parent, hypothesis)
-            for child in hypothesis.children:
-                add_nodes_edges(child, hypothesis)
 
-        add_nodes_edges(self.root)
+            if parent is not None:
+                pos[hypothesis] = (horizontal_idx, -level)
 
-        pos = nx.spring_layout(G)
+            for idx, child in enumerate(hypothesis.children):
+                horizontal_idx = idx - len(hypothesis.children) // 2
+                add_nodes_edges(child, hypothesis, level + 1, pos, horizontal_idx)
+
+        pos = {self.root: (0, 0)}
+        add_nodes_edges(self.root, pos=pos)
+
+        plt.figure(figsize=(12, 8))
+        # pos = nx.spring_layout(G)
+        pos = hierarchy_pos(G)
         nx.draw(
             G,
             pos,
             with_labels=False,
-            node_size=2000,
-            node_color="skyblue",
+            node_size=4_000,
+            node_color=[colors[node] for node in G.nodes()],
             node_shape="o",
             alpha=0.8,
         )
         nx.draw_networkx_labels(G, pos, labels, font_size=12)
+        plt.axis("off")
         plt.show()
