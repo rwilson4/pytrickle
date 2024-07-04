@@ -61,18 +61,21 @@ class Hierarchy:
         pos = {self.root: (0, 0)}
         add_nodes_edges(self.root, pos=pos)
 
-        plt.figure(figsize=(12, 8))
         # pos = nx.spring_layout(G)
         pos = hierarchy_pos(G)
+        fig = plt.figure(figsize=(16, 8))
+        ax = plt.gca()
         nx.draw(
             G,
             pos,
+            ax=ax,
             with_labels=False,
             node_size=4_000,
             node_color=[colors[node] for node in G.nodes()],
             node_shape="o",
             alpha=0.8,
         )
-        nx.draw_networkx_labels(G, pos, labels, font_size=12)
+        nx.draw_networkx_labels(G, pos, labels, font_size=12, ax=ax)
         plt.axis("off")
-        plt.show()
+
+        return fig
