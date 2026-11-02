@@ -111,7 +111,7 @@
   "claims": [
    {
     "node": "everyone",
-    "kind": "magnitude",
+    "kind": "effect",
     "alternative": "greater",
     "level": 0.025,
     "pvalue": 2.723665080604795e-16,
@@ -124,7 +124,7 @@
    },
    {
     "node": "everyone",
-    "kind": "difference",
+    "kind": "heterogeneity",
     "alternative": "greater",
     "level": 0.025,
     "pvalue": 5.1509787609287555e-18,
@@ -137,7 +137,7 @@
    },
    {
     "node": "x2 = 0",
-    "kind": "magnitude",
+    "kind": "effect",
     "alternative": "greater",
     "level": 0.0125,
     "pvalue": 0.5257913379368016,
@@ -150,7 +150,7 @@
    },
    {
     "node": "x2 = 0",
-    "kind": "difference",
+    "kind": "heterogeneity",
     "alternative": "greater",
     "level": 0.00625,
     "pvalue": 5.782216215798811e-15,
@@ -163,7 +163,7 @@
    },
    {
     "node": "x2 = 0, x3 = 0",
-    "kind": "magnitude",
+    "kind": "effect",
     "alternative": "less",
     "level": 0.003125,
     "pvalue": 1.4513924448730179e-07,
@@ -176,7 +176,7 @@
    },
    {
     "node": "x2 = 0, x3 = 0",
-    "kind": "difference",
+    "kind": "heterogeneity",
     "alternative": "greater",
     "level": 0.003125,
     "pvalue": 0.2256469191694538,
@@ -189,7 +189,7 @@
    },
    {
     "node": "x2 = 0, x3 = 0, x5 <= 1.42",
-    "kind": "magnitude",
+    "kind": "effect",
     "alternative": "less",
     "level": 0.0015625,
     "pvalue": 9.96735002537536e-08,
@@ -202,7 +202,7 @@
    },
    {
     "node": "x2 = 0, x3 = 0, x5 > 1.42",
-    "kind": "magnitude",
+    "kind": "effect",
     "alternative": "greater",
     "level": 0.0015625,
     "pvalue": 0.6910880107312054,
@@ -215,7 +215,7 @@
    },
    {
     "node": "x2 = 0, x3 = 1",
-    "kind": "magnitude",
+    "kind": "effect",
     "alternative": "greater",
     "level": 0.003125,
     "pvalue": 3.5463038436347633e-09,
@@ -228,7 +228,7 @@
    },
    {
     "node": "x2 = 0, x3 = 1",
-    "kind": "difference",
+    "kind": "heterogeneity",
     "alternative": "greater",
     "level": 0.003125,
     "pvalue": 0.9775658593532109,
@@ -241,7 +241,7 @@
    },
    {
     "node": "x2 = 0, x3 = 1, x5 <= -0.675",
-    "kind": "magnitude",
+    "kind": "effect",
     "alternative": "greater",
     "level": 0.0015625,
     "pvalue": 3.1638344496798617e-06,
@@ -254,7 +254,7 @@
    },
    {
     "node": "x2 = 0, x3 = 1, x5 > -0.675",
-    "kind": "magnitude",
+    "kind": "effect",
     "alternative": "greater",
     "level": 0.0015625,
     "pvalue": 3.0793221534249564e-05,
@@ -267,7 +267,7 @@
    },
    {
     "node": "x2 = 1",
-    "kind": "magnitude",
+    "kind": "effect",
     "alternative": "greater",
     "level": 0.0125,
     "pvalue": 2.7468869471534513e-33,
@@ -280,7 +280,7 @@
    },
    {
     "node": "x2 = 1",
-    "kind": "difference",
+    "kind": "heterogeneity",
     "alternative": "greater",
     "level": 0.0125,
     "pvalue": 0.4934029505368531,
@@ -293,7 +293,7 @@
    },
    {
     "node": "x2 = 1, x0 <= 1.85",
-    "kind": "magnitude",
+    "kind": "effect",
     "alternative": "greater",
     "level": 0.003125,
     "pvalue": 6.257741326721922e-33,
@@ -306,7 +306,7 @@
    },
    {
     "node": "x2 = 1, x0 <= 1.85",
-    "kind": "difference",
+    "kind": "heterogeneity",
     "alternative": "greater",
     "level": 0.003125,
     "pvalue": 0.18215116578273288,
@@ -319,7 +319,7 @@
    },
    {
     "node": "x2 = 1, x0 <= 1.85, x4 <= -2.02",
-    "kind": "magnitude",
+    "kind": "effect",
     "alternative": "less",
     "level": 0.0015625,
     "pvalue": 0.8235650282265818,
@@ -332,7 +332,7 @@
    },
    {
     "node": "x2 = 1, x0 <= 1.85, x4 > -2.02",
-    "kind": "magnitude",
+    "kind": "effect",
     "alternative": "greater",
     "level": 0.0015625,
     "pvalue": 8.197743665673949e-33,
@@ -345,7 +345,7 @@
    },
    {
     "node": "x2 = 1, x0 > 1.85",
-    "kind": "magnitude",
+    "kind": "effect",
     "alternative": "greater",
     "level": 0.00625,
     "pvalue": 0.0029904198623199934,

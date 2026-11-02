@@ -481,10 +481,10 @@ def claim_estimand(
 ) -> float:
     """The true value of what a claim is about.
 
-    A magnitude claim is about tau in its node; a difference claim about
+    An effect claim is about tau in its node; a heterogeneity claim about
     tau_right - tau_left across its split.
     """
-    if claim.kind == "magnitude":
+    if claim.kind == "effect":
         return effects.average(regions[claim.node].cells)
 
     assert claim.left is not None and claim.right is not None  # Satisfy type-checker
@@ -553,20 +553,20 @@ def build_hierarchy(
     """
     if procedure == "Fixed hierarchy":
         return interweaved_hierarchy(
-            tree, alpha, delta=DELTA, magnitude_stake=1.0, difference_stake=1.0
+            tree, alpha, delta=DELTA, effect_stake=1.0, heterogeneity_stake=1.0
         )
     elif procedure == "Non-adaptive":
         return interweaved_hierarchy(
             tree,
             alpha,
             delta=DELTA,
-            magnitude_stake=STAKE,
-            difference_stake=STAKE,
+            effect_stake=STAKE,
+            heterogeneity_stake=STAKE,
             adaptive=False,
         )
     elif procedure in ("Bonferroni", "Hierarchical Bonferroni", "Trickle down"):
         return interweaved_hierarchy(
-            tree, alpha, delta=DELTA, magnitude_stake=STAKE, difference_stake=STAKE
+            tree, alpha, delta=DELTA, effect_stake=STAKE, heterogeneity_stake=STAKE
         )
     else:
         raise ValueError(f"Unrecognized procedure: {procedure!r}")
@@ -695,7 +695,7 @@ def worked_example(seed: int, n: int = 10_000) -> WorkedExample:
         raise RuntimeError("The root of a population cannot be untestable.")
 
     claims = interweaved_hierarchy(
-        tree, ALPHA, delta=DELTA, magnitude_stake=STAKE, difference_stake=STAKE
+        tree, ALPHA, delta=DELTA, effect_stake=STAKE, heterogeneity_stake=STAKE
     ).test()
     return WorkedExample(
         region=region,

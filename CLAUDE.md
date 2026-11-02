@@ -112,8 +112,12 @@ Uplift Modeling*, arXiv:2610.37966. Code comments cite its sections:
 - §6 confidence bounds for retained hypotheses
 - §7 simulation study
 
-The paper calls the two hypothesis kinds *effect* and *heterogeneity*;
-the code calls them *magnitude* and *difference*.
+The code uses the paper's names for the two hypothesis kinds, *effect*
+and *heterogeneity*: `Claim.kind` is `"effect"` or `"heterogeneity"`,
+hypotheses are named `E[node]` and `H[node]`, and the stakes are
+`effect_stake` and `heterogeneity_stake`. Don't reintroduce the old
+names (*magnitude*, *difference*); "difference" survives only for the
+arithmetic, as in `ContrastTest.difference_in_differences`.
 
 ## Architecture
 
@@ -156,8 +160,8 @@ without them.
   rejects non-finite values.
 - `UpliftNode` is a binary tree node with evaluation-split arms and a
   training-split `tau_train`.
-- `interweaved_hierarchy()` builds the tree M[S] → D[S] → {M[L],
-  M[R]}. It returns `UpliftClaims`, a list of `Claim`s around a
+- `interweaved_hierarchy()` builds the tree E[S] → H[S] → {E[L],
+  E[R]}. It returns `UpliftClaims`, a list of `Claim`s around a
   `Hierarchy`.
 - `Claim` knows its level, its simultaneous confidence `interval`, its
   `reportable_bound` (truncated at `delta`, per §6), and how to state

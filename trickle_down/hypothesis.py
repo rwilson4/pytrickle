@@ -325,7 +325,7 @@ class TTest(Hypothesis):
        H_0: mu_1 - mu_2 <= delta     (alternative="greater")
 
     or the reverse inequality (alternative="less"), which is what the
-    magnitude hypotheses attached to the nodes of an uplift tree need:
+    effect hypotheses attached to the nodes of an uplift tree need:
     rejecting proves the treatment effect clears, or falls short of, a
     threshold chosen for its business meaning.
 

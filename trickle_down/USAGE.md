@@ -10,9 +10,8 @@ runs the procedure over a tree you assemble yourself.
 The library accompanies Wilson (2026), *Interpretable and Validatable
 Uplift Modeling*, arXiv:2610.37966, which proves the procedure
 controls the familywise error rate and studies its power by
-simulation. The paper calls the two kinds of uplift hypothesis
-*effect* and *heterogeneity*; the code calls them *magnitude* and
-*difference*.
+simulation. This guide and the code use the paper's names for the two
+kinds of uplift hypothesis, *effect* and *heterogeneity*.
 
 **For AI agents:** This guide gives recipes and conceptual
 orientation, but every public function and class carries a
@@ -212,39 +211,45 @@ node's hypothesis. A node has either zero children or two.
 ### The hypothesis architecture
 
 `interweaved_hierarchy` attaches two kinds of hypothesis to the
-decision tree and interweaves them. Writing $M_S$ for the magnitude
-hypothesis at node $S$ and $D_S$ for the difference hypothesis at
-its split,
+decision tree and interweaves them. Writing $E_S$ for the effect
+hypothesis at node $S$ and $H_S$ for the heterogeneity hypothesis at
+its split, as the paper does (section 3),
 
 ```text
-M_root -> D_root -> { M_left , M_right } -> ...
+E_root -> H_root -> { E_left , E_right } -> ...
 ```
 
-A magnitude hypothesis asks whether the average treatment effect in
-the node's subpopulation clears a threshold `delta`. A difference
+An effect hypothesis asks whether the average treatment effect in the
+node's subpopulation clears a threshold `delta`. A heterogeneity
 hypothesis asks whether the effect differs between the node's two
 children, which is what it means for the split to have found real
-heterogeneity. Each magnitude hypothesis has exactly one child, the
-difference hypothesis at the same node; each difference hypothesis has
-the two child magnitude hypotheses as its children. Leaves carry a
-magnitude hypothesis and nothing below.
+heterogeneity. Each effect hypothesis has exactly one child, the
+heterogeneity hypothesis at the same node; each heterogeneity
+hypothesis has the two child effect hypotheses as its children. Leaves
+carry an effect hypothesis and nothing below. `Claim.kind` is
+`"effect"` or `"heterogeneity"`, and the hypotheses are named
+`E[node]` and `H[node]`.
+
+The paper writes the directions as superscripts. Its $E^+_S$
+($\tau_S \leq \delta_S$) and $H^R_S$ ($\tau_R \leq \tau_L$) are
+`alternative="greater"`; its $E^-_S$ and $H^L_S$ are `"less"`.
 
 The ordering matters: a split is only interesting once we believe
-something about the node it splits, so the magnitude test's verdict
-sets the level available to the difference test, whose verdict in turn
+something about the node it splits, so the effect test's verdict
+sets the level available to the heterogeneity test, whose verdict in turn
 sets the level available to the children. With a stake below one a
 retention reduces that level rather than ending testing.
 
 ### The knobs
 
-| Parameter          | Default  | What it does                                                                                                                                                                        |
-|--------------------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `alpha`            | required | Familywise error rate.                                                                                                                                                              |
-| `delta`            | `0.0`    | Threshold for the magnitude hypotheses. Zero tests for benefit or harm; positive sets a break-even point an expensive treatment must clear; negative sets a non-inferiority margin. |
-| `magnitude_stake`  | `0.5`    | Stake for magnitude hypotheses at internal nodes. Leaves always stake one.                                                                                                          |
-| `difference_stake` | `0.5`    | Stake for difference hypotheses.                                                                                                                                                    |
-| `adaptive`         | `True`   | Pick each test's direction from the training split. `False` makes every test two-sided.                                                                                             |
-| `size_weighted`    | `False`  | Split a node's level between children in proportion to subpopulation size rather than equally.                                                                                      |
+| Parameter             | Default  | What it does                                                                                                                                                                     |
+|-----------------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `alpha`               | required | Familywise error rate.                                                                                                                                                           |
+| `delta`               | `0.0`    | Threshold for the effect hypotheses. Zero tests for benefit or harm; positive sets a break-even point an expensive treatment must clear; negative sets a non-inferiority margin. |
+| `effect_stake`        | `0.5`    | Stake for effect hypotheses at internal nodes. Leaves always stake one.                                                                                                          |
+| `heterogeneity_stake` | `0.5`    | Stake for heterogeneity hypotheses.                                                                                                                                              |
+| `adaptive`            | `True`   | Pick each test's direction from the training split. `False` makes every test two-sided.                                                                                          |
+| `size_weighted`       | `False`  | Split a node's level between children in proportion to subpopulation size rather than equally.                                                                                   |
 
 A stake below one keeps part of the level in reserve, so testing
 continues past a retention at reduced power. A stake of one is
@@ -263,7 +268,7 @@ seeing the evaluation split, which buys two things.
 
 The first is a factor of two in level. The second, and the more
 important, is the strength of the claim. A two-sided rejection of a
-difference hypothesis licenses "the effect differs across this split",
+heterogeneity hypothesis licenses "the effect differs across this split",
 which leaves the reader to infer the direction from an uncertified
 point estimate. A one-sided rejection licenses "the effect is larger
 for men than for women", which is a sentence someone can act on.
@@ -365,7 +370,7 @@ inverting the test gives a confidence bound simultaneous with every
 other claim the procedure makes.
 
 In the running example every claim is rejected at $\alpha = 0.05$.
-At $\alpha = 0.001$ the overall magnitude claim is retained:
+At $\alpha = 0.001$ the overall effect claim is retained:
 
 ```python
 strict = interweaved_hierarchy(everyone, alpha=0.001).test()
@@ -418,7 +423,7 @@ a simulation.
 
 The $k$ there is depth in the **hypothesis** tree, counted from one,
 which interleaves the two kinds: a decision-tree node at depth $d$
-contributes its magnitude hypothesis at $2d + 1$ and its difference
+contributes its effect hypothesis at $2d + 1$ and its heterogeneity
 hypothesis at $2d + 2$. `Claim.depth` is the decision-tree depth,
 counted from zero. They are different numbers and are not
 interchangeable — swapping them leaves a procedure that still looks

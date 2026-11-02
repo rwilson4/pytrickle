@@ -43,7 +43,7 @@ def opposite_effects_tree() -> UpliftNode:
 
 
 class TestAdaptiveDifferenceDirection:
-    """Difference hypotheses are oriented from the training split too."""
+    """Heterogeneity hypotheses are oriented from the training split too."""
 
     @staticmethod
     def test_direction_follows_the_training_contrast() -> None:
@@ -57,13 +57,13 @@ class TestAdaptiveDifferenceDirection:
         than on the left" rather than merely "they differ".
         """
         claims = interweaved_hierarchy(opposite_effects_tree(), ALPHA)
-        difference = next(c for c in claims.claims if c.kind == "difference")
+        heterogeneity = next(c for c in claims.claims if c.kind == "heterogeneity")
 
-        assert difference.alternative == "less"
+        assert heterogeneity.alternative == "less"
         # The claim records the direction; narrow to read it back off
         # the test object, which is where it actually takes effect.
-        assert isinstance(difference.hypothesis, ContrastTest)
-        assert difference.hypothesis.alternative == "less"
+        assert isinstance(heterogeneity.hypothesis, ContrastTest)
+        assert heterogeneity.hypothesis.alternative == "less"
 
     @staticmethod
     def test_direction_flips_with_the_training_split() -> None:
@@ -80,17 +80,17 @@ class TestAdaptiveDifferenceDirection:
             child.tau_train = -child.tau_train
 
         claims = interweaved_hierarchy(tree, ALPHA)
-        difference = next(c for c in claims.claims if c.kind == "difference")
+        heterogeneity = next(c for c in claims.claims if c.kind == "heterogeneity")
 
-        assert difference.alternative == "greater"
+        assert heterogeneity.alternative == "greater"
 
     @staticmethod
     def test_non_adaptive_keeps_the_two_sided_test() -> None:
         """The comparator certifies direction nowhere."""
         claims = interweaved_hierarchy(opposite_effects_tree(), ALPHA, adaptive=False)
-        difference = next(c for c in claims.claims if c.kind == "difference")
+        heterogeneity = next(c for c in claims.claims if c.kind == "heterogeneity")
 
-        assert difference.alternative == "two-sided"
+        assert heterogeneity.alternative == "two-sided"
 
     @staticmethod
     def test_one_sided_p_value_is_half_the_two_sided_one() -> None:
@@ -107,10 +107,10 @@ class TestAdaptiveDifferenceDirection:
         )
 
         one = next(
-            c for c in adaptive.claims if c.kind == "difference"
+            c for c in adaptive.claims if c.kind == "heterogeneity"
         ).hypothesis.pvalue()
         both = next(
-            c for c in two_sided.claims if c.kind == "difference"
+            c for c in two_sided.claims if c.kind == "heterogeneity"
         ).hypothesis.pvalue()
 
         assert one == pytest.approx(both / 2.0)
@@ -140,34 +140,32 @@ class TestStructure:
     """The shape of the hierarchy."""
 
     @staticmethod
-    def test_magnitude_and_difference_alternate() -> None:
+    def test_effect_and_heterogeneity_alternate() -> None:
         """M_root -> D_root -> {M_left, M_right}."""
         claims = interweaved_hierarchy(opposite_effects_tree(), ALPHA)
 
-        root_magnitude = claims.hierarchy.root
-        assert root_magnitude.name == "M[root]"
+        root_effect = claims.hierarchy.root
+        assert root_effect.name == "E[root]"
 
-        assert len(root_magnitude.children) == 1
-        difference = root_magnitude.children[0]
-        assert difference.name == "D[root]"
+        assert len(root_effect.children) == 1
+        heterogeneity = root_effect.children[0]
+        assert heterogeneity.name == "H[root]"
 
-        assert [child.name for child in difference.children] == [
-            "M[left]",
-            "M[right]",
+        assert [child.name for child in heterogeneity.children] == [
+            "E[left]",
+            "E[right]",
         ]
-        assert difference.children[0].children == []
+        assert heterogeneity.children[0].children == []
 
     @staticmethod
     def test_leaves_stake_everything() -> None:
         """Nothing below a leaf, so nothing to hold in reserve."""
-        claims = interweaved_hierarchy(
-            opposite_effects_tree(), ALPHA, magnitude_stake=0.5
-        )
+        claims = interweaved_hierarchy(opposite_effects_tree(), ALPHA, effect_stake=0.5)
         by_name = {c.hypothesis.name: c.hypothesis for c in claims.claims}
 
-        assert by_name["M[root]"].stake == 0.5
-        assert by_name["M[left]"].stake == 1.0
-        assert by_name["M[right]"].stake == 1.0
+        assert by_name["E[root]"].stake == 0.5
+        assert by_name["E[left]"].stake == 1.0
+        assert by_name["E[right]"].stake == 1.0
 
     @staticmethod
     def test_size_weighting() -> None:
@@ -179,7 +177,7 @@ class TestStructure:
         claims.test()
         by_name = {c.hypothesis.name: c.hypothesis for c in claims.claims}
 
-        assert by_name["M[left]"].weight > by_name["M[right]"].weight
+        assert by_name["E[left]"].weight > by_name["E[right]"].weight
 
     @staticmethod
     def test_odd_child_count_is_rejected() -> None:
@@ -196,8 +194,8 @@ class TestDirectionSelection:
         claims = interweaved_hierarchy(opposite_effects_tree(), ALPHA, adaptive=True)
         by_node = {(c.node, c.kind): c for c in claims.claims}
 
-        assert by_node[("left", "magnitude")].alternative == "greater"
-        assert by_node[("right", "magnitude")].alternative == "less"
+        assert by_node[("left", "effect")].alternative == "greater"
+        assert by_node[("right", "effect")].alternative == "less"
 
     @staticmethod
     def test_non_adaptive_tests_everything_two_sided() -> None:
@@ -220,7 +218,7 @@ class TestShowcase:
     def test_certifies_opposite_signed_effects_under_a_null_average() -> None:
         """Three claims, simultaneously, at FWER 0.05.
 
-        The root magnitude hypothesis is retained --- averaged over
+        The root effect hypothesis is retained --- averaged over
         everyone the treatment does nothing --- and the procedure
         nonetheless goes on to certify that the effect is larger on
         the left than on the right, positive on the left, and
@@ -229,15 +227,15 @@ class TestShowcase:
         claims = interweaved_hierarchy(opposite_effects_tree(), ALPHA).test()
         verdicts = {(c.node, c.kind): c.rejected for c in claims.claims}
 
-        assert verdicts[("root", "magnitude")] is False
-        assert verdicts[("root", "difference")] is True
-        assert verdicts[("left", "magnitude")] is True
-        assert verdicts[("right", "magnitude")] is True
+        assert verdicts[("root", "effect")] is False
+        assert verdicts[("root", "heterogeneity")] is True
+        assert verdicts[("left", "effect")] is True
+        assert verdicts[("right", "effect")] is True
 
         sentences = {c.sentence() for c in claims.certified()}
         assert sentences == {
             # Not "differs across the split at root": the one-sided
-            # difference test names which child responds more.
+            # heterogeneity test names which child responds more.
             "the effect is larger for left than for right",
             "the effect is positive for left",
             "the effect is negative for right",
@@ -247,16 +245,16 @@ class TestShowcase:
         # effects here are large enough that the verdicts alone would
         # survive a broken level computation.
         #
-        #   M[root]  0.05 available, staked 0.5      -> 0.0250
-        #   retained, so D[root] inherits (1 - 0.5) * 0.05 = 0.025,
+        #   E[root]  0.05 available, staked 0.5      -> 0.0250
+        #   retained, so H[root] inherits (1 - 0.5) * 0.05 = 0.025,
         #   staked 0.5                               -> 0.0125
         #   rejected, so each leaf inherits 0.5 * 0.025 = 0.0125,
         #   staked 1.0                               -> 0.0125
         levels = {(c.node, c.kind): c.level for c in claims.claims}
-        assert levels[("root", "magnitude")] == pytest.approx(0.0250)
-        assert levels[("root", "difference")] == pytest.approx(0.0125)
-        assert levels[("left", "magnitude")] == pytest.approx(0.0125)
-        assert levels[("right", "magnitude")] == pytest.approx(0.0125)
+        assert levels[("root", "effect")] == pytest.approx(0.0250)
+        assert levels[("root", "heterogeneity")] == pytest.approx(0.0125)
+        assert levels[("left", "effect")] == pytest.approx(0.0125)
+        assert levels[("right", "effect")] == pytest.approx(0.0125)
 
     @staticmethod
     def test_fixed_hierarchy_would_have_learned_nothing() -> None:
@@ -269,8 +267,8 @@ class TestShowcase:
         claims = interweaved_hierarchy(
             opposite_effects_tree(),
             ALPHA,
-            magnitude_stake=1.0,
-            difference_stake=1.0,
+            effect_stake=1.0,
+            heterogeneity_stake=1.0,
         ).test()
 
         assert claims.certified() == []
@@ -280,7 +278,7 @@ class TestShowcase:
         """Two-sided reaches the harmed node; it just says less there.
 
         This is the whole of what direction selection buys on the
-        magnitude side: the same node is reached, but the sentence is
+        effect side: the same node is reached, but the sentence is
         "differs from 0" rather than "is negative". Naming the side
         off a two-sided rejection is a Type III error argument, and
         this library does not make it.
@@ -300,9 +298,9 @@ class TestShowcase:
         claims = interweaved_hierarchy(opposite_effects_tree(), ALPHA, delta=5.0).test()
         by_node = {(c.node, c.kind): c for c in claims.claims}
 
-        assert by_node[("left", "magnitude")].alternative == "less"
-        assert by_node[("left", "magnitude")].rejected is True
-        assert by_node[("left", "magnitude")].sentence() == (
+        assert by_node[("left", "effect")].alternative == "less"
+        assert by_node[("left", "effect")].rejected is True
+        assert by_node[("left", "effect")].sentence() == (
             "the effect for left falls short of 5"
         )
 
@@ -313,7 +311,7 @@ class TestShowcase:
 
         assert "Certified at FWER 0.05" in report
         assert "the effect is negative for right" in report
-        assert "magnitude" in report and "difference" in report
+        assert "effect" in report and "heterogeneity" in report
 
 
 class TestNoEffect:
@@ -358,7 +356,7 @@ class TestComparators:
             c.hypothesis.name: r for c, r in zip(claims.claims, rejected, strict=True)
         }
 
-        assert by_index["M[root]"] is False
+        assert by_index["E[root]"] is False
 
     @staticmethod
     def test_hierarchical_bonferroni_levels_decay_with_depth() -> None:
@@ -370,10 +368,10 @@ class TestComparators:
             c.hypothesis.name: r for c, r in zip(claims.claims, rejected, strict=True)
         }
 
-        # M[root] at depth 1 sees alpha/2; the leaf magnitudes sit at
+        # E[root] at depth 1 sees alpha/2; the leaf effect hypotheses sit at
         # depth 3 with two hypotheses there, so alpha/16 each.
-        assert by_name["M[left]"] == (
-            by_name["M[left]"] and claims.claims[2].pvalue <= ALPHA / 16
+        assert by_name["E[left]"] == (
+            by_name["E[left]"] and claims.claims[2].pvalue <= ALPHA / 16
         )
         assert len(rejected) == 4
 
@@ -436,7 +434,7 @@ class TestConfidenceBounds:
         tree = opposite_effects_tree()
         claims = interweaved_hierarchy(tree, ALPHA)
         hypothesis = next(
-            c for c in claims.claims if c.node == "left" and c.kind == "magnitude"
+            c for c in claims.claims if c.node == "left" and c.kind == "effect"
         ).hypothesis
         assert isinstance(hypothesis, TTest)
         low, high = hypothesis.confidence_interval(level)
@@ -465,16 +463,14 @@ class TestConfidenceBounds:
         """The whole point: a retention is not silence.
 
         The two subgroups cancel exactly, so the root effect is zero
-        and the root magnitude hypothesis is retained. The inverted
+        and the root effect hypothesis is retained. The inverted
         test still bounds the root effect, and truncating at the
         threshold does not touch it: a retention never recycled its
         level, so the whole endpoint is paid for.
         """
         claims = interweaved_hierarchy(opposite_effects_tree(), ALPHA).test()
 
-        root = next(
-            c for c in claims.claims if c.node == "root" and c.kind == "magnitude"
-        )
+        root = next(c for c in claims.claims if c.node == "root" and c.kind == "effect")
         assert not root.rejected
 
         # tau_train is 0.0 at the root, so select_alternative orients
@@ -492,7 +488,7 @@ class TestConfidenceBounds:
         hypothesis = next(
             c
             for c in interweaved_hierarchy(opposite_effects_tree(), ALPHA).claims
-            if c.node == "left" and c.kind == "magnitude"
+            if c.node == "left" and c.kind == "effect"
         ).hypothesis
 
         generous, _ = hypothesis.confidence_interval(0.05)
@@ -507,7 +503,7 @@ class TestConfidenceBounds:
             for c in interweaved_hierarchy(
                 opposite_effects_tree(), ALPHA, adaptive=False
             ).claims
-            if c.kind == "difference"
+            if c.kind == "heterogeneity"
         )
         assert claim.alternative == "two-sided"
         hypothesis = claim.hypothesis
@@ -537,14 +533,14 @@ class TestReportableBounds:
         claims = interweaved_hierarchy(opposite_effects_tree(), ALPHA).test()
 
         benefit = next(
-            c for c in claims.claims if c.node == "left" and c.kind == "magnitude"
+            c for c in claims.claims if c.node == "left" and c.kind == "effect"
         )
         assert benefit.rejected and benefit.alternative == "greater"
         assert benefit.interval[0] > benefit.delta  # the raw inversion
         assert benefit.reportable_bound == (benefit.delta, float("inf"))
 
         harm = next(
-            c for c in claims.claims if c.node == "right" and c.kind == "magnitude"
+            c for c in claims.claims if c.node == "right" and c.kind == "effect"
         )
         assert harm.rejected and harm.alternative == "less"
         assert harm.interval[1] < harm.delta
@@ -563,7 +559,7 @@ class TestReportableBounds:
         ).test()
 
         benefit = next(
-            c for c in claims.claims if c.node == "left" and c.kind == "magnitude"
+            c for c in claims.claims if c.node == "left" and c.kind == "effect"
         )
         assert benefit.rejected and benefit.delta == delta
         assert benefit.reportable_bound == (delta, float("inf"))
@@ -585,7 +581,7 @@ class TestReportableBounds:
             )
             .test()
             .claims
-            if c.kind == "difference"
+            if c.kind == "heterogeneity"
         )
         assert claim.alternative == "two-sided"
         assert claim.reportable_bound == (-float("inf"), float("inf"))
@@ -599,7 +595,7 @@ class TestZeroLevelClaims:
     def _global_null_at_full_stake() -> UpliftClaims:
         """A null tree where the root keeps the whole level for itself.
 
-        With ``magnitude_stake`` one, a retention at the root passes
+        With ``effect_stake`` one, a retention at the root passes
         ``(1 - stake) * level``, which is exactly zero, to everything
         below it. Those nodes are then tested at level zero. The
         default stakes of a half never reach this; the paper's fixed
@@ -615,7 +611,7 @@ class TestZeroLevelClaims:
             children=[left, right],
         )
         return interweaved_hierarchy(
-            root, ALPHA, magnitude_stake=1.0, difference_stake=1.0
+            root, ALPHA, effect_stake=1.0, heterogeneity_stake=1.0
         ).test()
 
     def test_a_zero_level_claim_bounds_nothing(self) -> None:
@@ -698,22 +694,22 @@ class TestClaimDepth:
         claims = interweaved_hierarchy(opposite_effects_tree(), ALPHA).test()
         by_name = {c.hypothesis.name: c.depth for c in claims.claims}
 
-        assert by_name["M[root]"] == 0
-        assert by_name["D[root]"] == 0
-        assert by_name["M[left]"] == 1
-        assert by_name["M[right]"] == 1
+        assert by_name["E[root]"] == 0
+        assert by_name["H[root]"] == 0
+        assert by_name["E[left]"] == 1
+        assert by_name["E[right]"] == 1
 
     @staticmethod
     def test_is_not_the_hypothesis_tree_depth() -> None:
         """The two depths are different numbers, deliberately.
 
-        The hypothesis tree interleaves the kinds, so D[root] sits one
-        level below M[root] there while both describe the root node.
+        The hypothesis tree interleaves the kinds, so H[root] sits one
+        level below E[root] there while both describe the root node.
         `hierarchical_bonferroni_rejections` spends level by the
         hypothesis-tree depth; `Claim.depth` is the decision-tree one.
         """
         claims = interweaved_hierarchy(opposite_effects_tree(), ALPHA).test()
         by_name = {c.hypothesis.name: c for c in claims.claims}
 
-        assert by_name["M[root]"].depth == by_name["D[root]"].depth
-        assert by_name["D[root]"].hypothesis in by_name["M[root]"].hypothesis.children
+        assert by_name["E[root]"].depth == by_name["H[root]"].depth
+        assert by_name["H[root]"].hypothesis in by_name["E[root]"].hypothesis.children
