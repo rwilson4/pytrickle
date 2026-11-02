@@ -51,7 +51,7 @@ you change dependencies.
 
 `.github/workflows/publish.yml` publishes to PyPI by trusted
 publishing when a `v*` tag is pushed. The distribution is
-`pytrickle-py` (`pytrickle` on PyPI is an unrelated project); the
+`trickle-down` (`pytrickle` on PyPI is an unrelated project); the
 import name is `pytrickle`. Bump `version` in `pyproject.toml` before
 tagging.
 

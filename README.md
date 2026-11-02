@@ -41,11 +41,11 @@ The library implements:
 
 ## Installation
 
-The distribution is named `pytrickle-py`; the package imports as
+The distribution is named `trickle-down`; the package imports as
 `pytrickle`.
 
 ```bash
-pip install pytrickle-py
+pip install trickle-down
 ```
 
 Until the first release reaches PyPI, install from GitHub:

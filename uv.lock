@@ -1278,56 +1278,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pytrickle-py"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "eon" },
-    { name = "matplotlib" },
-    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "networkx", version = "3.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "tabulate" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-    { name = "types-networkx" },
-    { name = "types-tabulate" },
-]
-simulation = [
-    { name = "scikit-learn" },
-    { name = "xgboost", version = "3.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "xgboost", version = "3.4.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "eon", specifier = ">=1.2" },
-    { name = "matplotlib", specifier = ">=3.9" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.8" },
-    { name = "networkx", specifier = ">=3.3" },
-    { name = "numpy", specifier = ">=2.0,<3" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.2" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
-    { name = "scikit-learn", marker = "extra == 'simulation'", specifier = ">=1.5" },
-    { name = "scipy", specifier = ">=1.14" },
-    { name = "tabulate", specifier = ">=0.9" },
-    { name = "types-networkx", marker = "extra == 'dev'" },
-    { name = "types-tabulate", marker = "extra == 'dev'" },
-    { name = "xgboost", marker = "extra == 'simulation'", specifier = ">=2.1" },
-]
-provides-extras = ["dev", "simulation"]
-
-[[package]]
 name = "ruff"
 version = "0.17.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1577,6 +1527,56 @@ sdist = { url = "https://files.pythonhosted.org/packages/00/dc/6c58154c1c65f758e
 wheels = [
     { url = "https://files.pythonhosted.org/packages/43/3f/f88a53f60a472b46f4023f56d204dd7de33d34c5d2acbfa0d70a674e639e/threadpoolctl-3.7.0-py3-none-any.whl", hash = "sha256:cd8b60b5641b45c67bbf73c64c843235fc2d8a480c87389f52f5dbee893b86be", size = 26362, upload-time = "2026-09-15T15:46:19.168Z" },
 ]
+
+[[package]]
+name = "trickle-down"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "eon" },
+    { name = "matplotlib" },
+    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "networkx", version = "3.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "tabulate" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+    { name = "types-networkx" },
+    { name = "types-tabulate" },
+]
+simulation = [
+    { name = "scikit-learn" },
+    { name = "xgboost", version = "3.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "xgboost", version = "3.4.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "eon", specifier = ">=1.2" },
+    { name = "matplotlib", specifier = ">=3.9" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.8" },
+    { name = "networkx", specifier = ">=3.3" },
+    { name = "numpy", specifier = ">=2.0,<3" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.2" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "scikit-learn", marker = "extra == 'simulation'", specifier = ">=1.5" },
+    { name = "scipy", specifier = ">=1.14" },
+    { name = "tabulate", specifier = ">=0.9" },
+    { name = "types-networkx", marker = "extra == 'dev'" },
+    { name = "types-tabulate", marker = "extra == 'dev'" },
+    { name = "xgboost", marker = "extra == 'simulation'", specifier = ">=2.1" },
+]
+provides-extras = ["dev", "simulation"]
 
 [[package]]
 name = "types-networkx"
