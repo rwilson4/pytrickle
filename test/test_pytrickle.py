@@ -1,13 +1,14 @@
 """Test pytrickle."""
 
 import itertools
-from typing import Dict, List
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 from scipy import stats
 
-from pytrickle import FTest, Hierarchy, TTest
+import pytrickle
+from pytrickle import FixedPValue, FTest, Hierarchy, TTest
 
 
 class TestTTest:
@@ -17,8 +18,8 @@ class TestTTest:
     def test_ttest() -> None:
         """Examples from scipy.ttest_ind documentation."""
         rng = np.random.default_rng(seed=1)
-        rvs1 = stats.norm.rvs(loc=5, scale=10, size=500, random_state=rng)
-        rvs2 = stats.norm.rvs(loc=5, scale=10, size=500, random_state=rng)
+        rvs1 = rng.normal(loc=5, scale=10, size=500)
+        rvs2 = rng.normal(loc=5, scale=10, size=500)
 
         res = stats.ttest_ind(rvs1, rvs2, equal_var=False)
 
@@ -35,6 +36,11 @@ class TestTTest:
         assert t == pytest.approx(res.statistic)
 
         df = h._welch_satterthwaite()
+        # The scipy stubs still describe the old Ttest_indResult
+        # namedtuple; the runtime returns a TtestResult, which carries
+        # the Welch-Satterthwaite df this assertion is the whole point
+        # of checking against.
+        # pyrefly: ignore[missing-attribute]
         assert df == pytest.approx(res.df)
 
         p = h.pvalue()
@@ -44,7 +50,7 @@ class TestTTest:
         h.test_hypothesis()
         assert not h.rejected
 
-        rvs5 = stats.norm.rvs(loc=8, scale=20, size=1000, random_state=rng)
+        rvs5 = rng.normal(loc=8, scale=20, size=1000)
 
         res = stats.ttest_ind(rvs1, rvs5, equal_var=False)
 
@@ -61,6 +67,11 @@ class TestTTest:
         assert t == pytest.approx(res.statistic)
 
         df = h._welch_satterthwaite()
+        # The scipy stubs still describe the old Ttest_indResult
+        # namedtuple; the runtime returns a TtestResult, which carries
+        # the Welch-Satterthwaite df this assertion is the whole point
+        # of checking against.
+        # pyrefly: ignore[missing-attribute]
         assert df == pytest.approx(res.df)
 
         p = h.pvalue()
@@ -75,7 +86,7 @@ class TestFTest:
     """Tests for FTest."""
 
     @staticmethod
-    def dataset() -> Dict[str, List[float]]:
+    def dataset() -> dict[str, npt.NDArray[np.float64]]:
         """Data on shell measurement.
 
         Source:
@@ -109,7 +120,12 @@ class TestFTest:
         magadan = [0.1033, 0.0915, 0.0781, 0.0685, 0.0677, 0.0697, 0.0764, 0.0689]
         tvarminne = [0.0703, 0.1026, 0.0956, 0.0973, 0.1039, 0.1045]
 
-        return dict(**locals())
+        samples = dict(**locals())
+        # FTest takes arrays; returning lists makes every caller
+        # convert, and the lists are the only reason it did not.
+        return {
+            name: np.asarray(values, dtype=float) for name, values in samples.items()
+        }
 
     @staticmethod
     def test_ftest() -> None:
@@ -129,6 +145,7 @@ class TestFTest:
         h.set_available_level(0.05)
         h.test_hypothesis()
         assert h.rejected
+
 
 class TestHierarchy:
     """Tests for Hierarchy."""
@@ -157,4 +174,74 @@ class TestHierarchy:
         )
 
         h.test_hypotheses()
+
+        # Drawing needs matplotlib, networkx and EoN. EoN in particular is
+        # absent from some environments this runs in, so the visualization
+        # is exercised only where it can be.
+        pytest.importorskip("EoN")
         h.visualize_hierarchy()
+
+    @staticmethod
+    def test_retesting_at_new_fwer_updates_verdicts() -> None:
+        """A second run at a smaller fwer re-tests every node.
+
+        The root rejects at 0.05 and retains at 0.01. Were its first
+        verdict kept, it would report a rejection at a level its
+        p-value exceeds, and pass the whole level to its children.
+        """
+        root = FixedPValue(p=0.02, stake=0.5, name="root")
+        child = FixedPValue(p=0.004, name="child")
+        root.add_child(child)
+        h = Hierarchy(fwer=0.05, root=root)
+
+        h.test_hypotheses()
+        assert root.rejected
+        assert child.available_level == pytest.approx(0.05)
+
+        h.fwer = 0.01
+        h.test_hypotheses()
+        assert not root.rejected
+        assert child.available_level == pytest.approx(0.005)
+        assert child.rejected
+
+        for hypothesis in h.hypotheses():
+            assert hypothesis.available_level is not None
+            level = hypothesis.stake * hypothesis.available_level
+            assert hypothesis.rejected == (hypothesis.pvalue() <= level)
+
+
+class TestUsage:
+    """Tests for the packaged usage guide."""
+
+    @staticmethod
+    def test_usage_guide_is_packaged() -> None:
+        """USAGE.md is reachable at runtime, not only on disk.
+
+        The guide ships as package data. Excluding it from the build
+        leaves the source tree looking correct and breaks `usage()` for
+        every caller, so the check belongs here.
+        """
+        guide = pytrickle.usage()
+        assert guide.startswith("# pytrickle Usage Guide")
+        assert "interweaved_hierarchy" in guide
+
+
+class TestPublicAPI:
+    """What `from pytrickle import ...` is allowed to reach."""
+
+    @staticmethod
+    def test_comparators_are_exported() -> None:
+        """The baselines are part of the API, not an internal detail.
+
+        Anyone running the procedure wants something to compare it
+        against, and reaching into the `uplift` submodule for that is
+        the sort of import that quietly becomes load-bearing.
+        """
+        assert pytrickle.bonferroni_rejections([], 0.05) == []
+        assert pytrickle.hierarchical_bonferroni_rejections([], 0.05) == []
+
+    @staticmethod
+    def test_dir_matches_all() -> None:
+        """`__dir__` returns `__all__`, so every name in it must resolve."""
+        for name in pytrickle.__all__:
+            assert hasattr(pytrickle, name), f"{name} is in __all__ but missing"

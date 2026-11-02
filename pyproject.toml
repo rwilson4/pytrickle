@@ -12,11 +12,37 @@ networkx = "^3.3"
 numpy = "^2.0.0"
 scipy = "^1.14.0"
 eon = "^1.2"
+tabulate = "^0.9"
 
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 pytest-cov = "^5.0.0"
+scikit-learn = "^1.5"
+xgboost = "^2.1"
+mypy = "^2.4.1"
+ruff = "^0.17.3"
+black = "^26.10.1"
+types-tabulate = "^0.10.0.20261006"
+types-networkx = "^3.6.1.20261031"
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint.isort]
+# Sort names case-insensitively within an import, as the codebase does,
+# rather than grouping constants, classes and functions.
+order-by-type = false
+known-first-party = ["pytrickle"]
+
+[tool.mypy]
+python_version = "3.11"
+
+[[tool.mypy.overrides]]
+# scipy-stubs requires Python 3.12; EoN and sklearn ship no type
+# information.
+module = ["scipy", "scipy.*", "EoN", "EoN.*", "sklearn", "sklearn.*", "xgboost"]
+ignore_missing_imports = true
 
 [build-system]
 requires = ["poetry-core"]
