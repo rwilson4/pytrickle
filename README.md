@@ -50,7 +50,7 @@ pip install trickle-down
 Until the first release reaches PyPI, install from GitHub:
 
 ```bash
-pip install git+https://github.com/rwilson4/pytrickle
+pip install git+https://github.com/rwilson4/trickle-down
 ```
 
 ## Example

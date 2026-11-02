@@ -47,7 +47,7 @@ simulation = [
 ]
 
 [project.urls]
-Source = "https://github.com/rwilson4/pytrickle"
+Source = "https://github.com/rwilson4/trickle-down"
 Paper = "https://arxiv.org/abs/2610.37966"
 
 [build-system]
