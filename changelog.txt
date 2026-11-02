@@ -1,3 +1,10 @@
+2026-11-02 : Remove the old simulation script
+- Deleted simulation.py and simulation_results.png. paper/ now
+  reproduces the paper's simulation study in full, with the paper's
+  own data-generating process, which the old script did not use.
+- Dropped the `simulation` extra, which existed only for its xgboost
+  dependency.
+
 2026-11-02 : Documentation site and reproduction of the paper
 - Added Sphinx documentation (docs/), deployed to
   https://convexanalytics.com/trickle-down/ by
