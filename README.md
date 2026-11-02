@@ -47,7 +47,7 @@ Install the `trickle-down` distribution and import `trickle_down`.
 pip install trickle-down
 ```
 
-Until the first release reaches PyPI, install from GitHub:
+To install the development version from GitHub:
 
 ```bash
 pip install git+https://github.com/rwilson4/trickle-down
