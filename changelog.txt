@@ -1,3 +1,10 @@
+2026-11-02 : Release 0.2.0
+- First release under the paper's effect/heterogeneity names (see
+  below); the renamed arguments make this a breaking release for 0.1.0
+  callers.
+- Since 0.1.0 also: the documentation site and the reproduction of the
+  paper's simulation study.
+
 2026-11-02 : Use the paper's names for the two hypothesis kinds
 - Breaking: renamed interweaved_hierarchy's magnitude_stake and
   difference_stake to effect_stake and heterogeneity_stake.

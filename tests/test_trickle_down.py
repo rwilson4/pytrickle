@@ -245,3 +245,15 @@ class TestPublicAPI:
         """`__dir__` returns `__all__`, so every name in it must resolve."""
         for name in trickle_down.__all__:
             assert hasattr(trickle_down, name), f"{name} is in __all__ but missing"
+
+    @staticmethod
+    def test_version_matches_the_distribution() -> None:
+        """`__version__` agrees with pyproject.toml's version.
+
+        The two are set by hand in different files, so a release that
+        bumps one and forgets the other would ship a package that
+        misreports itself.
+        """
+        from importlib.metadata import version
+
+        assert trickle_down.__version__ == version("trickle-down")
