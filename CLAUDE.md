@@ -9,17 +9,12 @@ Use [uv](https://github.com/astral-sh/uv). Packaging is PEP 621
 `pyproject.toml` with a hatchling backend; `uv.lock` is committed.
 
 ```bash
-uv sync --extra dev          # runtime deps plus pytest, mypy, ruff
-uv run pytest                # 81 tests, ~1s
+uv sync --extra dev          # runtime deps, test/lint tools, sklearn, sphinx
+uv run pytest                # 107 tests, ~15s
 uv run pytest tests/test_trickle_down.py::TestHierarchy::test_hierarchy
-uv run mypy                  # checks trickle_down/ (files set in pyproject)
-uv run ruff check trickle_down tests
-uv run ruff format trickle_down tests   # or --check to verify
-
-# Worked example. Needs the `simulation` extra, and on macOS
-# `brew install libomp` for xgboost.
-uv sync --extra dev --extra simulation
-uv run python simulation.py
+uv run mypy                  # checks trickle_down/ and paper/ (set in pyproject)
+uv run ruff check trickle_down tests paper
+uv run ruff format trickle_down tests paper   # or --check to verify
 ```
 
 All tool configuration lives in `pyproject.toml`:
@@ -32,9 +27,6 @@ All tool configuration lives in `pyproject.toml`:
   skips missing stubs for scipy (scipy-stubs needs Python 3.12; this
   project supports 3.11) and EoN.
 - **Tests:** pytest turns warnings into errors.
-
-`simulation.py` writes `simulation_results.png` to the current
-directory; run it from elsewhere to keep the committed image.
 
 ## CI and branching
 
@@ -187,9 +179,3 @@ checks that it ships and mentions `interweaved_hierarchy`.
 
 **Imports:** Modules import one another as `from trickle_down.x import
 ...`, never as bare `from x import ...`.
-
-**`simulation.py`:** A worked example. It fits a T-learner with
-XGBoost and a depth-2 tree, then tests only the heterogeneity
-(`ContrastTest`) hypotheses with trickle down. It does not yet use
-`interweaved_hierarchy`, and its data-generating process differs from
-the paper's §7.1.

@@ -45,12 +45,6 @@ dev = [
     "pydata-sphinx-theme>=0.17.1",
     "myst-parser>=3.0",
 ]
-# Only simulation.py needs xgboost. On macOS it also needs the system
-# OpenMP runtime (`brew install libomp`).
-simulation = [
-    "scikit-learn>=1.5",
-    "xgboost>=2.1",
-]
 
 [project.urls]
 Source = "https://github.com/rwilson4/trickle-down"
@@ -155,5 +149,3 @@ known-first-party = ["trickle_down", "paper"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["B011"]
-# Console output labels levels with a Greek alpha on purpose.
-"simulation.py" = ["RUF001"]
