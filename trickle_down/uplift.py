@@ -3,23 +3,23 @@ r"""The hypothesis architecture for validating an uplift model.
 An uplift model is distilled into a shallow decision tree, and each node
 of that tree carries two kinds of claim we might want to certify:
 
-- a *magnitude* claim about the average treatment effect in the node's
+- an *effect* claim about the average treatment effect in the node's
   subpopulation, tau_S, against a threshold delta_S chosen for its
   business meaning; and
-- a *difference* claim that tau differs between the node's two
+- a *heterogeneity* claim that tau differs between the node's two
   children, which is what it means for the split to identify real
   heterogeneity.
 
-These interweave into a single tree of hypotheses. Writing M_S for the
-magnitude hypothesis at node S and D_S for the difference hypothesis at
-its split,
+These interweave into a single tree of hypotheses. Writing E_S for the
+effect hypothesis at node S and H_S for the heterogeneity hypothesis at
+its split, as the paper does (Wilson 2026, section 3),
 
-    M_root -> D_root -> { M_L , M_R } -> ...
+    E_root -> H_root -> { E_L , E_R } -> ...
 
-Each magnitude hypothesis has exactly one child, the difference
-hypothesis at the same node; each difference hypothesis has the
-magnitude hypotheses of the two child nodes as its children. Leaves of
-the decision tree carry a magnitude hypothesis and nothing below it.
+Each effect hypothesis has exactly one child, the heterogeneity
+hypothesis at the same node; each heterogeneity hypothesis has the
+effect hypotheses of the two child nodes as its children. Leaves of
+the decision tree carry an effect hypothesis and nothing below it.
 
 The payoff is a set of claims a decision-maker can act on. If the first
 split is gender, the procedure can certify simultaneously that the
@@ -110,7 +110,7 @@ class UpliftNode:
         hypotheses are tested against.
     tau_train : float
         The effect estimated on the **training** split. Used only to
-        choose the direction of the one-sided magnitude test, never to
+        choose the direction of the one-sided effect test, never to
         compute a p-value.
     children : list[UpliftNode]
         Either empty, or exactly two.
@@ -157,7 +157,7 @@ class Claim:
     """One hypothesis in the architecture, and what rejecting it proves."""
 
     node: str
-    kind: str  # "magnitude" or "difference"
+    kind: str  # "effect" or "heterogeneity"
     hypothesis: Hypothesis
     delta: float
     alternative: Alternative
@@ -165,8 +165,9 @@ class Claim:
     # zero, its children one. Both claims at a node share its depth.
     #
     # This is not the claim's depth in the hypothesis tree, which
-    # interleaves the two kinds and so runs 2*depth + 1 for a magnitude
-    # and 2*depth + 2 for a difference. `hierarchical_bonferroni_rejections`
+    # interleaves the two kinds and so runs 2*depth + 1 for an effect
+    # and 2*depth + 2 for a heterogeneity hypothesis.
+    # `hierarchical_bonferroni_rejections`
     # spends level by the latter; do not substitute this field there.
     #
     # Recorded here because depth is what an aggregate claim count hides
@@ -175,7 +176,7 @@ class Claim:
     # the differences away. Callers used to recover it by counting commas
     # in the node name, which breaks on any name containing one.
     depth: int
-    # The two children compared, for a difference claim. The contrast
+    # The two children compared, for a heterogeneity claim. The contrast
     # estimated is tau_right - tau_left, so a one-sided rejection names
     # one of them, and the sentence cannot be written without them.
     left: str | None = None
@@ -265,7 +266,7 @@ class Claim:
             return f"no bound is free for the level-zero test at {self.node}"
 
         low, high = self.reportable_bound
-        if self.kind == "difference":
+        if self.kind == "heterogeneity":
             pair = f"the effect for {self.right} relative to {self.left}"
             if self.alternative == "greater":
                 return f"{pair} is above {low:.3g}"
@@ -281,7 +282,7 @@ class Claim:
 
     def sentence(self) -> str:
         """What rejecting this hypothesis certifies, in words."""
-        if self.kind == "difference":
+        if self.kind == "heterogeneity":
             if self.alternative == "two-sided" or not (self.left and self.right):
                 return f"the effect differs across the split at {self.node}"
             larger, smaller = (
@@ -366,8 +367,8 @@ def interweaved_hierarchy(
     root: UpliftNode,
     alpha: float,
     delta: float = 0.0,
-    magnitude_stake: float = 0.5,
-    difference_stake: float = 0.5,
+    effect_stake: float = 0.5,
+    heterogeneity_stake: float = 0.5,
     adaptive: bool = True,
     size_weighted: bool = False,
 ) -> UpliftClaims:
@@ -380,17 +381,17 @@ def interweaved_hierarchy(
     alpha : float
         Familywise error rate.
     delta : float
-        Threshold for the magnitude hypotheses. Zero tests for benefit
+        Threshold for the effect hypotheses. Zero tests for benefit
         or harm; a positive value a break-even point an expensive
         treatment must clear; a negative value a non-inferiority margin.
-    magnitude_stake, difference_stake : float
+    effect_stake, heterogeneity_stake : float
         Stakes for the two kinds of hypothesis. A stake below one keeps
         part of the level in reserve, so testing continues past a
         retention at reduced power.
     adaptive : bool
         Choose the direction of every test from the training split. For
-        a magnitude hypothesis that is the sign of the node's effect;
-        for a difference hypothesis it is the sign of
+        an effect hypothesis that is the sign of the node's effect;
+        for a heterogeneity hypothesis it is the sign of
         ``tau_right - tau_left``, so rejecting says which child
         responds more rather than merely that they differ. When False,
         every hypothesis of both kinds is two-sided --- the natural
@@ -429,7 +430,7 @@ def interweaved_hierarchy(
     family of hypotheses is fixed. A wrong guess costs power, not
     validity.
 
-    A one-sided difference test is not merely more powerful than the
+    A one-sided heterogeneity test is not merely more powerful than the
     two-sided one; it answers a different and more useful question.
     Rejecting a two-sided test licenses "the effect differs across this
     split", which leaves the reader to work out which way from an
@@ -455,12 +456,12 @@ def interweaved_hierarchy(
 
     claims: list[Claim] = []
 
-    def magnitude_for(node: UpliftNode, depth: int) -> Hypothesis:
+    def effect_for(node: UpliftNode, depth: int) -> Hypothesis:
         alternative: Alternative = (
             select_alternative(node.tau_train, delta) if adaptive else "two-sided"
         )
         # A leaf has nothing below it to save level for.
-        stake = magnitude_stake if node.children else 1.0
+        stake = effect_stake if node.children else 1.0
         hypothesis = TTest(
             mean1=node.treated.mean,
             mean2=node.control.mean,
@@ -469,14 +470,14 @@ def interweaved_hierarchy(
             n1=node.treated.size,
             n2=node.control.size,
             stake=stake,
-            name=f"M[{node.name}]",
+            name=f"E[{node.name}]",
             delta=delta,
             alternative=alternative,
         )
         claims.append(
             Claim(
                 node=node.name,
-                kind="magnitude",
+                kind="effect",
                 hypothesis=hypothesis,
                 delta=delta,
                 alternative=alternative,
@@ -485,7 +486,7 @@ def interweaved_hierarchy(
         )
         return hypothesis
 
-    def difference_for(node: UpliftNode, depth: int) -> Hypothesis:
+    def heterogeneity_for(node: UpliftNode, depth: int) -> Hypothesis:
         left, right = node.children
         # The contrast estimated is tau_right - tau_left, so the
         # training-split sign of that difference picks the side. The
@@ -503,14 +504,14 @@ def interweaved_hierarchy(
             control_right=right.control.as_cell(),
             treated_left=left.treated.as_cell(),
             control_left=left.control.as_cell(),
-            stake=difference_stake,
-            name=f"D[{node.name}]",
+            stake=heterogeneity_stake,
+            name=f"H[{node.name}]",
             alternative=alternative,
         )
         claims.append(
             Claim(
                 node=node.name,
-                kind="difference",
+                kind="heterogeneity",
                 hypothesis=hypothesis,
                 delta=0.0,
                 alternative=alternative,
@@ -522,18 +523,18 @@ def interweaved_hierarchy(
         return hypothesis
 
     def build(node: UpliftNode, depth: int = 0) -> Hypothesis:
-        magnitude = magnitude_for(node, depth)
+        effect = effect_for(node, depth)
         if not node.children:
-            return magnitude
+            return effect
 
-        difference = difference_for(node, depth)
-        magnitude.add_child(difference)
+        heterogeneity = heterogeneity_for(node, depth)
+        effect.add_child(heterogeneity)
         for child in node.children:
-            child_magnitude = build(child, depth + 1)
-            child_magnitude.weight = float(child.size) if size_weighted else 1.0
-            difference.add_child(child_magnitude)
+            child_effect = build(child, depth + 1)
+            child_effect.weight = float(child.size) if size_weighted else 1.0
+            heterogeneity.add_child(child_effect)
 
-        return magnitude
+        return effect
 
     return UpliftClaims(
         hierarchy=Hierarchy(fwer=alpha, root=build(root)), claims=claims
@@ -562,8 +563,8 @@ def hierarchical_bonferroni_rejections(claims: list[Claim], alpha: float) -> lis
     The levels sum to at most alpha, so the FWER is controlled, but
     power falls off exponentially with depth. The depth is depth in the
     *hypothesis* tree, counted from one, which interleaves the two kinds
-    of claim: a node at decision-tree depth d contributes its magnitude
-    hypothesis at 2d + 1 and its difference hypothesis at 2d + 2. That
+    of claim: a node at decision-tree depth d contributes its effect
+    hypothesis at 2d + 1 and its heterogeneity hypothesis at 2d + 2. That
     is not `Claim.depth`, which is the decision-tree depth. Substituting
     one for the other leaves a procedure that still looks valid and
     spends quite different levels.

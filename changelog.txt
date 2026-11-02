@@ -1,3 +1,13 @@
+2026-11-02 : Use the paper's names for the two hypothesis kinds
+- Breaking: renamed interweaved_hierarchy's magnitude_stake and
+  difference_stake to effect_stake and heterogeneity_stake.
+- Breaking: Claim.kind is now "effect" or "heterogeneity" (was
+  "magnitude" or "difference"), and hypotheses are named E[node] and
+  H[node] (was M[node] and D[node]), matching E_S and H_S in Wilson
+  (2026), section 3.
+- USAGE.md maps the paper's direction notation (E+, E-, H^R, H^L) onto
+  the `alternative` argument.
+
 2026-11-02 : Remove the old simulation script
 - Deleted simulation.py and simulation_results.png. paper/ now
   reproduces the paper's simulation study in full, with the paper's

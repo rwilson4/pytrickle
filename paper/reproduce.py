@@ -425,9 +425,7 @@ def render_example(example: dict[str, Any]) -> tuple[str, str, str]:
     )
 
     certified = {
-        c["node"]
-        for c in example["claims"]
-        if c["kind"] == "magnitude" and c["rejected"]
+        c["node"] for c in example["claims"] if c["kind"] == "effect" and c["rejected"]
     }
     our_tree = list_table(
         ["Node", "τ̂ train", "τ̂ eval", "True τ", "Effect certified"],
@@ -450,8 +448,7 @@ def render_example(example: dict[str, Any]) -> tuple[str, str, str]:
         [
             [
                 c["node"],
-                ("effect" if c["kind"] == "magnitude" else "heterogeneity")
-                + f" ({c['alternative']})",
+                f"{c['kind']} ({c['alternative']})",
                 f"{c['level']:.4f}",
                 f"{c['pvalue']:.2g}",
                 "rejected" if c["rejected"] else "retained",
