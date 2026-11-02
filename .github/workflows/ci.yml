@@ -32,17 +32,17 @@ jobs:
         run: uv sync --locked --extra dev --python ${{ matrix.python-version }}
 
       - name: Lint with ruff
-        run: uv run --python ${{ matrix.python-version }} ruff check pytrickle tests
+        run: uv run --python ${{ matrix.python-version }} ruff check trickle_down tests
 
       - name: Format check with ruff
-        run: uv run --python ${{ matrix.python-version }} ruff format --check pytrickle tests
+        run: uv run --python ${{ matrix.python-version }} ruff format --check trickle_down tests
 
       - name: Type-check with mypy
-        run: uv run --python ${{ matrix.python-version }} mypy pytrickle
+        run: uv run --python ${{ matrix.python-version }} mypy trickle_down
 
       - name: Run tests with coverage
         run: |
           uv run --python ${{ matrix.python-version }} \
-            pytest --cov=pytrickle --cov-report=term --cov-fail-under=80
+            pytest --cov=trickle_down --cov-report=term --cov-fail-under=80
         env:
           MPLBACKEND: Agg

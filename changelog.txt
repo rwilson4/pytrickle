@@ -1,3 +1,9 @@
+2026-11-02 : Rename the package to trickle_down
+- The import package is now trickle_down (was pytrickle), matching the
+  trickle-down distribution: `import trickle_down`. There is no
+  pytrickle compatibility shim; update imports.
+- tests/test_pytrickle.py is now tests/test_trickle_down.py.
+
 2026-11-02 : Relicense under Apache 2.0; publish as trickle-down
 - Relicensed from MIT to the Apache License 2.0 (LICENSE.txt), the
   licence used by gamdist and PairMatch. Copies distributed earlier

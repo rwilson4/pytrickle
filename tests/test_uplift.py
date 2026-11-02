@@ -2,7 +2,7 @@
 
 import pytest
 
-from pytrickle.uplift import (
+from trickle_down.uplift import (
     ArmSummary,
     bonferroni_rejections,
     ContrastTest,

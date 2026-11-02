@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from pytrickle import (
+from trickle_down import (
     contrast_moments,
     ContrastTest,
     select_alternative,

@@ -41,8 +41,7 @@ The library implements:
 
 ## Installation
 
-The distribution is named `trickle-down`; the package imports as
-`pytrickle`.
+Install the `trickle-down` distribution and import `trickle_down`.
 
 ```bash
 pip install trickle-down
@@ -57,7 +56,7 @@ pip install git+https://github.com/rwilson4/pytrickle
 ## Example
 
 ```python
-from pytrickle import ArmSummary, UpliftNode, interweaved_hierarchy
+from trickle_down import ArmSummary, UpliftNode, interweaved_hierarchy
 
 men = UpliftNode(
     name="men",
@@ -89,7 +88,7 @@ At FWER 0.05 this certifies that the effect is positive overall,
 positive for men, negative for women, and larger for men than for
 women.
 
-`pytrickle.usage()` returns the full usage guide, with recipes for
+`trickle_down.usage()` returns the full usage guide, with recipes for
 building hierarchies by hand, reporting confidence bounds, and
 comparing against the other procedures.
 
@@ -98,7 +97,7 @@ comparing against the other procedures.
 ```bash
 uv sync --extra dev
 uv run pytest
-uv run ruff check pytrickle tests
+uv run ruff check trickle_down tests
 uv run mypy
 ```
 

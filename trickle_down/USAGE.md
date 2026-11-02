@@ -1,6 +1,6 @@
-# pytrickle Usage Guide
+# trickle-down Usage Guide
 
-This guide teaches an AI agent (or human user) how to use `pytrickle`
+This guide teaches an AI agent (or human user) how to use `trickle_down`
 to test a family of hypotheses arranged in a tree while controlling
 the familywise error rate. The library's two entry points are
 `interweaved_hierarchy`, which builds the whole hypothesis
@@ -20,7 +20,7 @@ NumPy-style docstring documenting its parameters, return values and
 edge cases. Read the docstring before calling:
 
 ```python
-from pytrickle import (
+from trickle_down import (
     Hierarchy,
     interweaved_hierarchy,
     select_alternative,
@@ -111,7 +111,7 @@ hierarchy behaves as the theory says.
 ## Imports
 
 ```python
-from pytrickle import (
+from trickle_down import (
     ArmSummary,
     Claim,
     ContrastTest,
@@ -138,7 +138,7 @@ a training split, evaluate it on a held-out split, and certify what
 the evaluation split supports.
 
 ```python
-from pytrickle import (
+from trickle_down import (
     ArmSummary,
     UpliftNode,
     interweaved_hierarchy,
@@ -273,7 +273,7 @@ library does not make.
 To choose a direction outside the uplift machinery:
 
 ```python
-from pytrickle import (
+from trickle_down import (
     TTest,
     select_alternative,
 )
@@ -308,7 +308,7 @@ tests until that much is established.
 
 ```python
 import numpy as np
-from pytrickle import (
+from trickle_down import (
     FTest,
     Hierarchy,
     TTest,
@@ -349,7 +349,7 @@ randomization test or a bootstrap or a model-based Wald test, wrap its
 p-value:
 
 ```python
-from pytrickle import FixedPValue
+from trickle_down import FixedPValue
 
 node = FixedPValue(p=0.013, stake=0.5, name="bootstrap test")
 ```
@@ -453,7 +453,7 @@ total claim count can differ sharply at every individual depth.
 
 ```python
 import numpy as np
-from pytrickle import (
+from trickle_down import (
     GraphicalProcedure,
     trickle_down_graph,
 )
@@ -511,7 +511,7 @@ procedure actually chose.
 
 **`Hierarchy.visualize_hierarchy` imports its drawing libraries
 lazily.** `matplotlib`, `networkx` and `EoN` are installed with
-`pytrickle`, but they are imported only when you draw, so importing
+`trickle-down`, but they are imported only when you draw, so importing
 the package stays fast and works in environments that lack them.
 
 ## References

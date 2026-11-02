@@ -11,10 +11,10 @@ Use [uv](https://github.com/astral-sh/uv). Packaging is PEP 621
 ```bash
 uv sync --extra dev          # runtime deps plus pytest, mypy, ruff
 uv run pytest                # 81 tests, ~1s
-uv run pytest tests/test_pytrickle.py::TestHierarchy::test_hierarchy
-uv run mypy                  # checks pytrickle/ (files set in pyproject)
-uv run ruff check pytrickle tests
-uv run ruff format pytrickle tests   # or --check to verify
+uv run pytest tests/test_trickle_down.py::TestHierarchy::test_hierarchy
+uv run mypy                  # checks trickle_down/ (files set in pyproject)
+uv run ruff check trickle_down tests
+uv run ruff format trickle_down tests   # or --check to verify
 
 # Worked example. Needs the `simulation` extra, and on macOS
 # `brew install libomp` for xgboost.
@@ -24,7 +24,7 @@ uv run python simulation.py
 
 All tool configuration lives in `pyproject.toml`:
 - **Formatting:** `ruff format` replaces black. It also formats the
-  Python code blocks inside `pytrickle/USAGE.md`.
+  Python code blocks inside `trickle_down/USAGE.md`.
 - **Linting:** ruff uses the same rule set as `~/Projects/gamdist`.
   Its isort sorts names case-insensitively (`order-by-type = false`),
   matching the existing imports.
@@ -45,14 +45,15 @@ The branching model mirrors `~/Projects/gamdist`:
 
 CI (`.github/workflows/ci.yml`) runs on pushes and PRs to main, on
 Python 3.11 and 3.12. It runs `ruff check`, `ruff format --check`,
-`mypy`, and `pytest --cov=pytrickle --cov-fail-under=80`. Its install
+`mypy`, and `pytest --cov=trickle_down --cov-fail-under=80`. Its install
 step uses `uv sync --locked`, so update `uv.lock` (`uv lock`) whenever
 you change dependencies.
 
 `.github/workflows/publish.yml` publishes to PyPI by trusted
 publishing when a `v*` tag is pushed. The distribution is
-`trickle-down` (`pytrickle` on PyPI is an unrelated project); the
-import name is `pytrickle`. Bump `version` in `pyproject.toml` before
+`trickle-down` and the import name `trickle_down`; the project was
+called pytrickle until November 2026 (`pytrickle` on PyPI is an
+unrelated project). Bump `version` in `pyproject.toml` before
 tagging.
 
 Licence: Apache 2.0 (`LICENSE.txt`). Add a `changelog.txt` entry for
@@ -134,10 +135,10 @@ empirically.
 
 **Public API (`__init__.py`):** Exports everything listed in
 `__all__`, including `usage()`, which returns the packaged
-`pytrickle/USAGE.md`. Keep USAGE.md in sync with the API; a test
+`trickle_down/USAGE.md`. Keep USAGE.md in sync with the API; a test
 checks that it ships and mentions `interweaved_hierarchy`.
 
-**Imports:** Modules import one another as `from pytrickle.x import
+**Imports:** Modules import one another as `from trickle_down.x import
 ...`, never as bare `from x import ...`.
 
 **`simulation.py`:** A worked example. It fits a T-learner with

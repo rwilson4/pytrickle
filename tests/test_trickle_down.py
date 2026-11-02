@@ -1,4 +1,4 @@
-"""Test pytrickle."""
+"""Test trickle_down."""
 
 import itertools
 
@@ -7,8 +7,8 @@ import numpy.typing as npt
 import pytest
 from scipy import stats
 
-import pytrickle
-from pytrickle import FixedPValue, FTest, Hierarchy, TTest
+import trickle_down
+from trickle_down import FixedPValue, FTest, Hierarchy, TTest
 
 
 class TestTTest:
@@ -221,13 +221,13 @@ class TestUsage:
         leaves the source tree looking correct and breaks `usage()` for
         every caller, so the check belongs here.
         """
-        guide = pytrickle.usage()
-        assert guide.startswith("# pytrickle Usage Guide")
+        guide = trickle_down.usage()
+        assert guide.startswith("# trickle-down Usage Guide")
         assert "interweaved_hierarchy" in guide
 
 
 class TestPublicAPI:
-    """What `from pytrickle import ...` is allowed to reach."""
+    """What `from trickle_down import ...` is allowed to reach."""
 
     @staticmethod
     def test_comparators_are_exported() -> None:
@@ -237,11 +237,11 @@ class TestPublicAPI:
         against, and reaching into the `uplift` submodule for that is
         the sort of import that quietly becomes load-bearing.
         """
-        assert pytrickle.bonferroni_rejections([], 0.05) == []
-        assert pytrickle.hierarchical_bonferroni_rejections([], 0.05) == []
+        assert trickle_down.bonferroni_rejections([], 0.05) == []
+        assert trickle_down.hierarchical_bonferroni_rejections([], 0.05) == []
 
     @staticmethod
     def test_dir_matches_all() -> None:
         """`__dir__` returns `__all__`, so every name in it must resolve."""
-        for name in pytrickle.__all__:
-            assert hasattr(pytrickle, name), f"{name} is in __all__ but missing"
+        for name in trickle_down.__all__:
+            assert hasattr(trickle_down, name), f"{name} is in __all__ but missing"

@@ -7,8 +7,8 @@ import numpy.typing as npt
 from sklearn.tree import DecisionTreeRegressor, export_text
 from xgboost import XGBRegressor
 
-from pytrickle import ArmSummary, ContrastTest, Hierarchy
-from pytrickle.hypothesis import Hypothesis
+from trickle_down import ArmSummary, ContrastTest, Hierarchy
+from trickle_down.hypothesis import Hypothesis
 
 _FEATURE_NAMES = [f"x{i}" for i in range(10)]
 
@@ -156,7 +156,7 @@ def _build_hypothesis(
     """Build a ContrastTest for the split at internal node `node_id`.
 
     Tests H0: tau_right - tau_left = 0 (two-sided), where tau_S is the ATE in child
-    subpopulation S. Children in the pytrickle hierarchy are added for
+    subpopulation S. Children in the trickle_down hierarchy are added for
     any child nodes that are themselves internal (i.e., have further splits).
     """
     tree_ = dt.tree_

@@ -35,8 +35,8 @@ from dataclasses import dataclass, field
 import numpy as np
 import numpy.typing as npt
 
-from pytrickle.hierarchy import Hierarchy
-from pytrickle.hypothesis import (
+from trickle_down.hierarchy import Hierarchy
+from trickle_down.hypothesis import (
     Alternative,
     ContrastTest,
     Hypothesis,

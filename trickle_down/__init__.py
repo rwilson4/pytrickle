@@ -4,12 +4,12 @@ import importlib.resources
 
 __version__ = "0.1.0"
 
-from pytrickle.graphical import (
+from trickle_down.graphical import (
     GraphicalProcedure,
     trickle_down_graph,
 )
-from pytrickle.hierarchy import Hierarchy
-from pytrickle.hypothesis import (
+from trickle_down.hierarchy import Hierarchy
+from trickle_down.hypothesis import (
     Alternative,
     contrast_moments,
     ContrastTest,
@@ -19,7 +19,7 @@ from pytrickle.hypothesis import (
     select_alternative,
     TTest,
 )
-from pytrickle.uplift import (
+from trickle_down.uplift import (
     ArmSummary,
     bonferroni_rejections,
     Claim,

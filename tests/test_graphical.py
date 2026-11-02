@@ -6,7 +6,7 @@ from collections.abc import Sequence
 import numpy as np
 import pytest
 
-from pytrickle import (
+from trickle_down import (
     FixedPValue,
     GraphicalProcedure,
     Hierarchy,

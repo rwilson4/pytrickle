@@ -19,7 +19,7 @@ from collections.abc import Sequence
 import numpy as np
 import numpy.typing as npt
 
-from pytrickle.hypothesis import Hypothesis
+from trickle_down.hypothesis import Hypothesis
 
 
 class GraphicalProcedure:

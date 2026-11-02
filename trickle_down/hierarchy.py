@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from pytrickle.hypothesis import Hypothesis
+from trickle_down.hypothesis import Hypothesis
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
