@@ -59,6 +59,53 @@ tagging.
 Licence: Apache 2.0 (`LICENSE.txt`). Add a `changelog.txt` entry for
 behaviour changes.
 
+## Docs
+
+The Sphinx site in `docs/` (pydata theme, modeled on `~/Projects/gamdist`
+and `~/Projects/PairMatch`) is served at
+https://convexanalytics.com/trickle-down/.
+- `docs/user_guides/usage.md` includes `trickle_down/USAGE.md` through
+  MyST, so the usage guide has one source.
+- `docs/user_guides/reproducing_the_paper.rst` recomputes the paper's
+  exact results (Table 1) as doctests, and shows the simulation study
+  beside the paper's numbers.
+- `docs/api.rst` renders the docstrings via autodoc.
+
+```bash
+cd docs && uv run make html SPHINXOPTS="-W --keep-going" && uv run make doctest
+```
+
+`.github/workflows/deploy_docs.yml` builds with `-W` and runs the
+doctests on PRs and on pushes to main that touch `docs/`,
+`trickle_down/`, `paper/`, `pyproject.toml` or `uv.lock`. On pushes it
+rsyncs `docs/_build/html/` to the droplet with the `DOCS_DEPLOY_KEY`,
+`DOCS_USER` and `DOCS_HOST` secrets; the key's `rrsync` forced command
+on the server fixes the destination, `/srv/docs/convexanalytics/trickle-down`.
+`docs/_build/` is not committed.
+
+## Paper reproduction
+
+`paper/` reconstructs the simulation study of §7. The paper's own
+script is not public; see "Paper" below.
+- `paper/simulation.py` holds the data-generating process, the fixed
+  and fitted partitions, the five procedures, and the scoring of true
+  claims. It uses only the public `trickle_down` API.
+- `ASSUMPTIONS` lists every gap in the paper's description and how it
+  is filled, and the docs render that list. Two assumptions were
+  calibrated against the paper's tables, and say so: `epsilon_1 ~ N(0,
+  9)`, and `+0.30` for the helped quarter.
+- `paper/published.py` transcribes Tables 2-4 and Figure 2 from the
+  arXiv source.
+- `uv run python -m paper.reproduce` runs everything (about 5 minutes
+  on 10 cores) and writes `paper/results.json` plus the RST fragments
+  in `docs/user_guides/_generated/`. Commit both;
+  `--render-only` rebuilds the fragments from the JSON.
+
+Leaves of the interweaved hierarchy stake one. The paper's Figure 3
+and the power tables confirm that its simulations did the same, so
+don't "fix" this to match the paper's remark that trickle down and
+Hierarchical Bonferroni agree exactly under the global null.
+
 ## Paper
 
 This library accompanies Wilson (2026), *Interpretable and Validatable

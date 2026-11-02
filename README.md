@@ -88,7 +88,9 @@ At FWER 0.05 this certifies that the effect is positive overall,
 positive for men, negative for women, and larger for men than for
 women.
 
-`trickle_down.usage()` returns the full usage guide, with recipes for
+The documentation, at https://convexanalytics.com/trickle-down/, includes
+the usage guide and a reproduction of the paper's calculations.
+`trickle_down.usage()` returns the usage guide, with recipes for
 building hierarchies by hand, reporting confidence bounds, and
 comparing against the other procedures.
 

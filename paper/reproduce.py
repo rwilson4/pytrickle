@@ -363,7 +363,7 @@ def render_power_gaps(power: dict[str, Any]) -> str:
     rows.sort(reverse=True)
     within_two = sum(1 for r in rows if r[0] <= 2.0)
     body = list_table(
-        ["Configuration", "Procedure", "Scale", "Paper", "Ours", "|z|"],
+        ["Configuration", "Procedure", "Scale", "Paper", "Ours", "Gap (s.e.)"],
         [
             [name, procedure, f"{scale:.2f}", f"{paper:.2f}", f"{ours:.2f}", f"{z:.1f}"]
             for z, name, procedure, scale, paper, ours in rows[:8]
