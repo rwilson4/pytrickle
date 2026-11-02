@@ -113,3 +113,6 @@ venv.bak/
 .DS_Store
 .idea/
 .vscode/
+
+# Sphinx build output
+docs/_build/

@@ -1,3 +1,12 @@
+2026-11-02 : Documentation site and reproduction of the paper
+- Added Sphinx documentation (docs/), deployed to
+  https://convexanalytics.com/trickle-down/ by
+  .github/workflows/deploy_docs.yml.
+- Added paper/, a reconstruction of the paper's simulation study from
+  its text, and a guide comparing it with the paper's Tables 2-4.
+- scikit-learn, sphinx, pydata-sphinx-theme and myst-parser joined the
+  dev extra.
+
 2026-11-02 : Rename the package to trickle_down
 - The import package is now trickle_down (was pytrickle), matching the
   trickle-down distribution: `import trickle_down`. There is no

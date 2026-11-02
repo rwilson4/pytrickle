@@ -38,9 +38,15 @@ dev = [
     "ruff>=0.5",
     "types-tabulate",
     "types-networkx",
+    # Reproducing the paper's simulation study (paper/).
+    "scikit-learn>=1.5",
+    # Documentation (docs/).
+    "sphinx>=7.0",
+    "pydata-sphinx-theme>=0.17.1",
+    "myst-parser>=3.0",
 ]
-# Only simulation.py needs these. On macOS, xgboost also needs the
-# system OpenMP runtime (`brew install libomp`).
+# Only simulation.py needs xgboost. On macOS it also needs the system
+# OpenMP runtime (`brew install libomp`).
 simulation = [
     "scikit-learn>=1.5",
     "xgboost>=2.1",
@@ -61,6 +67,8 @@ packages = ["trickle_down"]
 include = [
     "trickle_down",
     "tests",
+    "paper",
+    "docs",
     "README.md",
     "LICENSE.txt",
     "changelog.txt",
@@ -69,7 +77,7 @@ include = [
 
 [tool.mypy]
 python_version = "3.11"
-files = ["trickle_down"]
+files = ["trickle_down", "paper"]
 warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
@@ -85,7 +93,7 @@ disallow_untyped_calls = false
 [[tool.mypy.overrides]]
 # scipy-stubs requires Python 3.12, and this project supports 3.11;
 # EoN ships no type information.
-module = ["EoN.*", "scipy", "scipy.*"]
+module = ["EoN.*", "scipy", "scipy.*", "sklearn.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
@@ -143,7 +151,7 @@ ignore = [
 # Sort names case-insensitively within an import, as the codebase does,
 # rather than grouping constants, classes and functions.
 order-by-type = false
-known-first-party = ["trickle_down"]
+known-first-party = ["trickle_down", "paper"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["B011"]
