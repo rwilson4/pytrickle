@@ -1,8 +1,9 @@
 [project]
-name = "pytrickle"
+name = "pytrickle-py"
 version = "0.1.0"
 description = "Testing Statistical Hypotheses in a Tree-Like Hierarchy"
 readme = "README.md"
+license = { file = "LICENSE.txt" }
 authors = [
     { name = "Bob Wilson", email = "bob.wilson@convexanalytics.com" },
 ]
@@ -12,6 +13,7 @@ maintainers = [
 requires-python = ">=3.11"
 keywords = ["statistics", "multiple testing", "familywise error rate", "uplift"]
 classifiers = [
+    "License :: OSI Approved :: Apache Software License",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -60,6 +62,7 @@ include = [
     "pytrickle",
     "tests",
     "README.md",
+    "LICENSE.txt",
     "changelog.txt",
     "CLAUDE.md",
 ]

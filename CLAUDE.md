@@ -49,7 +49,14 @@ Python 3.11 and 3.12. It runs `ruff check`, `ruff format --check`,
 step uses `uv sync --locked`, so update `uv.lock` (`uv lock`) whenever
 you change dependencies.
 
-Add a `changelog.txt` entry for behaviour changes.
+`.github/workflows/publish.yml` publishes to PyPI by trusted
+publishing when a `v*` tag is pushed. The distribution is
+`pytrickle-py` (`pytrickle` on PyPI is an unrelated project); the
+import name is `pytrickle`. Bump `version` in `pyproject.toml` before
+tagging.
+
+Licence: Apache 2.0 (`LICENSE.txt`). Add a `changelog.txt` entry for
+behaviour changes.
 
 ## Paper
 

@@ -1,3 +1,14 @@
+2026-11-02 : Relicense under Apache 2.0; publish as pytrickle-py
+- Relicensed from MIT to the Apache License 2.0 (LICENSE.txt), the
+  licence used by gamdist and PairMatch. Copies distributed earlier
+  under MIT remain available under MIT.
+- The distribution is now named pytrickle-py, since pytrickle on PyPI
+  belongs to an unrelated project. The import name is unchanged.
+- Added a publish workflow: pushing a v* tag builds with uv and
+  uploads to PyPI by trusted publishing.
+- Rewrote README.md around the paper, with installation, an example
+  and a citation.
+
 2026-11-02 : Move to uv, hatchling and GitHub Actions
 - Replaced poetry with uv. pyproject.toml now uses PEP 621 metadata
   with a hatchling build backend; uv.lock replaces poetry.lock.
