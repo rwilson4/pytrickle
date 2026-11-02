@@ -295,7 +295,7 @@ def main() -> None:
 
     print("\nHypothesis testing results (H0: ATE_left = ATE_right at each split):")
     print(f"  {'Split':<40}  {'p-value':>8}  {'test α':>8}  decision")
-    print(f"  {'-'*40}  {'-'*8}  {'-'*8}  --------")
+    print(f"  {'-' * 40}  {'-' * 8}  {'-' * 8}  --------")
     _print_results(root)
 
     # Visualize the hierarchy.

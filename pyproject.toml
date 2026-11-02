@@ -1,33 +1,140 @@
-[tool.poetry]
+[project]
 name = "pytrickle"
 version = "0.1.0"
 description = "Testing Statistical Hypotheses in a Tree-Like Hierarchy"
-authors = ["Bob Wilson <bob.wilson@convexanalytics.com>"]
 readme = "README.md"
+authors = [
+    { name = "Bob Wilson", email = "bob.wilson@convexanalytics.com" },
+]
+maintainers = [
+    { name = "Bob Wilson" },
+]
+requires-python = ">=3.11"
+keywords = ["statistics", "multiple testing", "familywise error rate", "uplift"]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = [
+    "numpy>=2.0,<3",
+    "scipy>=1.14",
+    "matplotlib>=3.9",
+    "networkx>=3.3",
+    "eon>=1.2",
+    "tabulate>=0.9",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-matplotlib = "^3.9.0"
-networkx = "^3.3"
-numpy = "^2.0.0"
-scipy = "^1.14.0"
-eon = "^1.2"
-tabulate = "^0.9"
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2",
+    "pytest-cov>=5.0",
+    "mypy>=1.8",
+    "ruff>=0.5",
+    "types-tabulate",
+    "types-networkx",
+]
+# Only simulation.py needs these. On macOS, xgboost also needs the
+# system OpenMP runtime (`brew install libomp`).
+simulation = [
+    "scikit-learn>=1.5",
+    "xgboost>=2.1",
+]
 
+[project.urls]
+Source = "https://github.com/rwilson4/pytrickle"
+Paper = "https://arxiv.org/abs/2610.37966"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.2.2"
-pytest-cov = "^5.0.0"
-scikit-learn = "^1.5"
-xgboost = "^2.1"
-mypy = "^2.4.1"
-ruff = "^0.17.3"
-black = "^26.10.1"
-types-tabulate = "^0.10.0.20261006"
-types-networkx = "^3.6.1.20261031"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pytrickle"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "pytrickle",
+    "tests",
+    "README.md",
+    "changelog.txt",
+    "CLAUDE.md",
+]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["pytrickle"]
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_return_any = false
+# scipy and EoN lack complete type stubs; accept their calls without
+# type-checking but require our own code to be fully annotated.
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
+# scipy-stubs requires Python 3.12, and this project supports 3.11;
+# EoN ships no type information.
+module = ["EoN.*", "scipy", "scipy.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+]
+filterwarnings = [
+    "error",
+]
+
+[tool.coverage.run]
+source = ["pytrickle"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "\\.\\.\\.",
+]
 
 [tool.ruff]
 line-length = 88
+target-version = "py311"
+
+[tool.ruff.format]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "W",
+    "I",
+    "B",
+    "UP",
+    "SIM",
+    "RUF",
+]
+ignore = [
+    "E501",
+    "B007",
+    "B008",
+    "RUF046",
+    "RUF059",
+    "SIM108",
+    "SIM113",
+]
 
 [tool.ruff.lint.isort]
 # Sort names case-insensitively within an import, as the codebase does,
@@ -35,15 +142,7 @@ line-length = 88
 order-by-type = false
 known-first-party = ["pytrickle"]
 
-[tool.mypy]
-python_version = "3.11"
-
-[[tool.mypy.overrides]]
-# scipy-stubs requires Python 3.12; EoN and sklearn ship no type
-# information.
-module = ["scipy", "scipy.*", "EoN", "EoN.*", "sklearn", "sklearn.*", "xgboost"]
-ignore_missing_imports = true
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+# Console output labels levels with a Greek alpha on purpose.
+"simulation.py" = ["RUF001"]

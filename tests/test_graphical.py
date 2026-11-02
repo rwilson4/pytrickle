@@ -28,7 +28,7 @@ def chain(
 
     nodes = [
         FixedPValue(p=p, weight=w, stake=v, name=str(i))
-        for i, (p, w, v) in enumerate(zip(pvalues, weights, stakes))
+        for i, (p, w, v) in enumerate(zip(pvalues, weights, stakes, strict=True))
     ]
     for parent, child in itertools.pairwise(nodes):
         parent.add_child(child)

@@ -100,16 +100,18 @@ def contrast_moments(
     if any(n < 2 for n in sizes):
         raise ValueError("Every group needs at least two observations.")
 
-    estimate = sum(c * mu for c, mu in zip(coefficients, means))
+    estimate = sum(c * mu for c, mu in zip(coefficients, means, strict=True))
 
     # u_i is group i's contribution to the variance of the contrast.
-    u = [c * c * v / n for c, v, n in zip(coefficients, variances, sizes)]
+    u = [c * c * v / n for c, v, n in zip(coefficients, variances, sizes, strict=True)]
     variance = sum(u)
 
     if variance <= 0.0:
         raise ValueError("Contrast has zero variance; cannot form a t statistic.")
 
-    denominator = sum(u_i * u_i / (n - 1) for u_i, n in zip(u, sizes) if u_i > 0.0)
+    denominator = sum(
+        u_i * u_i / (n - 1) for u_i, n in zip(u, sizes, strict=True) if u_i > 0.0
+    )
     df = variance * variance / denominator
 
     return estimate, math.sqrt(variance), df

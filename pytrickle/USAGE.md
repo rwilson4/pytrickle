@@ -281,9 +281,12 @@ from pytrickle import (
 alternative = select_alternative(tau_train=0.065, delta=0.02)  # "greater"
 
 test = TTest(
-    mean1=0.42, mean2=0.35,
-    var1=0.24, var2=0.23,
-    n1=5_000, n2=5_000,
+    mean1=0.42,
+    mean2=0.35,
+    var1=0.24,
+    var2=0.23,
+    n1=5_000,
+    n2=5_000,
     delta=0.02,
     alternative=alternative,
     name="M[men]",
@@ -318,9 +321,12 @@ omnibus = FTest(a, b, c, stake=0.5, name="any difference")
 for label, (x, y) in {"a vs b": (a, b), "a vs c": (a, c)}.items():
     omnibus.add_child(
         TTest(
-            mean1=x.mean(), mean2=y.mean(),
-            var1=x.var(ddof=1), var2=y.var(ddof=1),
-            n1=len(x), n2=len(y),
+            mean1=x.mean(),
+            mean2=y.mean(),
+            var1=x.var(ddof=1),
+            var2=y.var(ddof=1),
+            n1=len(x),
+            n2=len(y),
             weight=1.0,
             stake=1.0,
             name=label,

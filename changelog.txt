@@ -1,0 +1,26 @@
+2026-11-02 : Move to uv, hatchling and GitHub Actions
+- Replaced poetry with uv. pyproject.toml now uses PEP 621 metadata
+  with a hatchling build backend; uv.lock replaces poetry.lock.
+- scikit-learn and xgboost, needed only by simulation.py, moved to a
+  `simulation` extra; `dev` holds pytest, mypy, ruff and type stubs.
+- Replaced black with `ruff format`, and adopted the ruff rule set
+  used in gamdist (E, F, W, I, B, UP, SIM, RUF). zip() calls over
+  aligned sequences now pass strict=True.
+- Tightened mypy: our own code must be fully annotated.
+- Moved pytest and coverage configuration from tox.ini into
+  pyproject.toml. Warnings are now errors rather than suppressed.
+- Renamed test/ to tests/.
+- Added a CI workflow running ruff, mypy and pytest (coverage at
+  least 80%) on Python 3.11 and 3.12.
+
+2026-11-02 : Uplift hierarchy, usage guide, and import fixes
+- Added the interweaved magnitude/difference hypothesis architecture
+  (uplift.py), one-sided and contrast tests, confidence bounds by test
+  inversion, and a reference implementation of the graphical approach
+  (graphical.py), following Wilson (2026), arXiv:2610.37966.
+- Hierarchy.test_hypotheses re-tests every node on each call.
+  Previously a node already marked tested kept its verdict, so
+  re-running at a new fwer left verdicts that disagreed with the
+  levels recorded beside them.
+- Hierarchy raises ValueError unless 0 < fwer < 1.
+- Packaged USAGE.md, returned by pytrickle.usage().

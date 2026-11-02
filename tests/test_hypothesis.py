@@ -223,7 +223,8 @@ class TestContrastTest:
         assert h._standard_error() == pytest.approx(math.sqrt(sum(u)))
 
         expected_df = sum(u) ** 2 / sum(
-            u_i * u_i / (cell[2] - 1) for u_i, cell in zip(u, (tr, cr, tl, cl))
+            u_i * u_i / (cell[2] - 1)
+            for u_i, cell in zip(u, (tr, cr, tl, cl), strict=True)
         )
         assert h._welch_satterthwaite() == pytest.approx(expected_df)
 

@@ -346,7 +346,7 @@ class TestComparators:
 
         # Four hypotheses, so each is tested at 0.0125.
         assert len(rejected) == 4
-        for claim, flag in zip(claims.claims, rejected):
+        for claim, flag in zip(claims.claims, rejected, strict=True):
             assert flag == (claim.pvalue <= ALPHA / 4)
 
     @staticmethod
@@ -354,7 +354,9 @@ class TestComparators:
         """A null root is retained by every valid procedure."""
         claims = interweaved_hierarchy(opposite_effects_tree(), ALPHA).test()
         rejected = bonferroni_rejections(claims.claims, ALPHA)
-        by_index = {c.hypothesis.name: r for c, r in zip(claims.claims, rejected)}
+        by_index = {
+            c.hypothesis.name: r for c, r in zip(claims.claims, rejected, strict=True)
+        }
 
         assert by_index["M[root]"] is False
 
@@ -364,7 +366,9 @@ class TestComparators:
         root = opposite_effects_tree()
         claims = interweaved_hierarchy(root, ALPHA).test()
         rejected = hierarchical_bonferroni_rejections(claims.claims, ALPHA)
-        by_name = {c.hypothesis.name: r for c, r in zip(claims.claims, rejected)}
+        by_name = {
+            c.hypothesis.name: r for c, r in zip(claims.claims, rejected, strict=True)
+        }
 
         # M[root] at depth 1 sees alpha/2; the leaf magnitudes sit at
         # depth 3 with two hypotheses there, so alpha/16 each.
@@ -392,6 +396,7 @@ class TestComparators:
             zip(
                 (c.hypothesis.name for c in claims.claims),
                 hierarchical_bonferroni_rejections(claims.claims, ALPHA),
+                strict=True,
             )
         )
 
@@ -400,6 +405,7 @@ class TestComparators:
             zip(
                 (c.hypothesis.name for c in shuffled),
                 hierarchical_bonferroni_rejections(shuffled, ALPHA),
+                strict=True,
             )
         )
 

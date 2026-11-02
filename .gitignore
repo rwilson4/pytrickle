@@ -106,3 +106,10 @@ venv.bak/
 # emacs scratch files
 *~
 .dir-locals.el
+
+# Tool caches and local environment
+.ruff_cache/
+.python-version
+.DS_Store
+.idea/
+.vscode/

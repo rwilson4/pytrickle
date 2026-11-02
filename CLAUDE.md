@@ -5,40 +5,51 @@ working with code in this repository.
 
 ## Commands
 
-This project uses `poetry` for dependency management (note: the global
-style guide prefers `uv`, but this repo uses `poetry`).
+Use [uv](https://github.com/astral-sh/uv). Packaging is PEP 621
+`pyproject.toml` with a hatchling backend; `uv.lock` is committed.
 
 ```bash
-# Install dependencies
-poetry install
+uv sync --extra dev          # runtime deps plus pytest, mypy, ruff
+uv run pytest                # 81 tests, ~1s
+uv run pytest tests/test_pytrickle.py::TestHierarchy::test_hierarchy
+uv run mypy                  # checks pytrickle/ (files set in pyproject)
+uv run ruff check pytrickle tests
+uv run ruff format pytrickle tests   # or --check to verify
 
-# Run all tests (includes coverage report)
-poetry run pytest
-
-# Run a single test
-poetry run pytest test/test_pytrickle.py::TestHierarchy::test_hierarchy
-
-# Type checking
-poetry run mypy pytrickle/
-
-# Linting and formatting
-poetry run ruff check pytrickle/ test/ simulation.py
-poetry run black pytrickle/ test/ simulation.py
-
-# Worked example (needs `brew install libomp` for xgboost on macOS)
-poetry run python simulation.py
+# Worked example. Needs the `simulation` extra, and on macOS
+# `brew install libomp` for xgboost.
+uv sync --extra dev --extra simulation
+uv run python simulation.py
 ```
 
-Tests automatically run with coverage (≥80% required) via `tox.ini`.
+All tool configuration lives in `pyproject.toml`:
+- **Formatting:** `ruff format` replaces black. It also formats the
+  Python code blocks inside `pytrickle/USAGE.md`.
+- **Linting:** ruff uses the same rule set as `~/Projects/gamdist`.
+  Its isort sorts names case-insensitively (`order-by-type = false`),
+  matching the existing imports.
+- **Type checking:** mypy requires full annotations on our own code. It
+  skips missing stubs for scipy (scipy-stubs needs Python 3.12; this
+  project supports 3.11) and EoN.
+- **Tests:** pytest turns warnings into errors.
 
-Tool configuration lives in `pyproject.toml`. Ruff's isort sorts names
-case-insensitively (`order-by-type = false`), matching the existing
-imports. Mypy skips missing stubs for scipy (scipy-stubs needs Python
-3.12; this project supports 3.11), EoN, sklearn and xgboost.
+`simulation.py` writes `simulation_results.png` to the current
+directory; run it from elsewhere to keep the committed image.
 
-Run `simulation.py` from a scratch directory if you don't want to
-overwrite `simulation_results.png`; `poetry -C` runs it from the repo
-root.
+## CI and branching
+
+The branching model mirrors `~/Projects/gamdist`:
+- Do work on a `claude/<topic>` branch.
+- Open a PR against `main`, and merge it with a merge commit.
+- Commit subjects start with `[Claude]` when Claude commits.
+
+CI (`.github/workflows/ci.yml`) runs on pushes and PRs to main, on
+Python 3.11 and 3.12. It runs `ruff check`, `ruff format --check`,
+`mypy`, and `pytest --cov=pytrickle --cov-fail-under=80`. Its install
+step uses `uv sync --locked`, so update `uv.lock` (`uv lock`) whenever
+you change dependencies.
+
+Add a `changelog.txt` entry for behaviour changes.
 
 ## Paper
 
@@ -111,7 +122,7 @@ without them.
 **`graphical.py`:** `GraphicalProcedure` is a reference implementation
 of Bretz et al. (2009). `trickle_down_graph()` encodes a trickle-down
 tree as an equivalent allocation and transition matrix.
-`test/test_graphical.py` uses them to check the equivalence
+`tests/test_graphical.py` uses them to check the equivalence
 empirically.
 
 **Public API (`__init__.py`):** Exports everything listed in
