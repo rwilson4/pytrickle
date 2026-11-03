@@ -1,3 +1,11 @@
+2026-11-03 : End-to-end user guide
+- Added docs/user_guides/end_to_end.rst: simulate an experiment with a
+  costly treatment, set delta to its break-even uplift, fit a
+  T-learner, distill it into a deep decision tree, test it with
+  trickle down, and prune the report per branch to the splits that
+  change the decision (Wilson 2026, sections 3, 5.2 and 7.1). Its
+  examples run as doctests.
+
 2026-11-02 : Release 0.2.0
 - First release under the paper's effect/heterogeneity names (see
   below); the renamed arguments make this a breaking release for 0.1.0
