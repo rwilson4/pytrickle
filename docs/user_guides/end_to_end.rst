@@ -3,8 +3,8 @@ End-to-End: From Uplift Model to Certified Claims
 
 The usage guide starts from the arm summaries of a tree someone has
 already fitted. This one starts from raw data. We simulate a randomized experiment, fit an uplift model on one
-half of it, distill the model into a shallow decision tree, choose the
-tree's depth, and then use trickle down on the other half to decide
+half of it, distill the model into a decision tree, and then use trickle down on
+the other half to decide
 which statements about the tree's subgroups we may make to a
 decision-maker. This is the workflow of [Wil26]_, with a
 scikit-learn model standing in for whatever learner you prefer.
@@ -16,9 +16,8 @@ we finish by comparing the claims against them.
 
 One rule organizes everything that follows:
 
-    Anything that shapes the hypotheses (the model, the tree, its
-    depth, the direction of each test) may use only the training
-    split. The evaluation split is used once, to compute p-values.
+    Anything that shapes the hypotheses (the model, the tree, the
+    direction of each test) may use only the training split. The evaluation split is used once, to compute p-values.
 
 The familywise guarantee is conditional on the training split, so it
 survives any amount of exploration there [Cox75]_. It does not survive
@@ -161,18 +160,17 @@ effect as their difference:
 
 The individual predictions from such a model are too noisy to report
 and too numerous to test. What a decision-maker can act on is a
-handful of subgroups, so we distill the predictions into a shallow
-regression tree. ``min_samples_leaf=0.05`` keeps every leaf at 5% of
-the data or more: a smaller leaf would be cheap to grow but too small
-to certify anything about.
+handful of subgroups, so we distill the predictions into a regression
+tree. ``min_samples_leaf=0.05`` keeps every leaf at 5% of the data or
+more: a smaller leaf would be cheap to grow but too small to certify
+anything about. It is the only limit we put on the tree's size; the
+section on depth below explains why.
 
 .. testcode::
 
-    def summary_tree(X, cate, depth):
-        """A shallow tree approximating the predicted effects."""
-        tree = DecisionTreeRegressor(
-            max_depth=depth, min_samples_leaf=0.05, random_state=0
-        )
+    def summary_tree(X, cate):
+        """A tree approximating the predicted effects."""
+        tree = DecisionTreeRegressor(min_samples_leaf=0.05, random_state=0)
         return tree.fit(X, cate)
 
 From Tree to Hypotheses
@@ -250,94 +248,66 @@ as in the paper, rather than the tree's own prediction (the node's
 mean predicted effect). Either is legitimate, because both use only
 the training split; a poor choice costs power, never validity.
 
-Choosing the Depth
-------------------
+How Deep? Grow, Then Prune
+--------------------------
 
-How deep should the tree be? Deeper trees offer more claims, but
-each one is tested at a smaller level: a node's level is shared
-between its two children, so it at least halves with each layer of the
-tree, and falls further below a retention. Too shallow and real
-heterogeneity goes unreported; too deep and the leaves are too small
-and their levels too low to certify anything.
+How deep should the tree be? Under trickle down the question needs no
+tuning, as [Wil26]_ discusses: grow the tree as deep as
+``min_samples_leaf`` allows, let the procedure find where the evidence
+runs out, and prune what lies beyond. Two facts make this work.
 
-Any rule is valid so long as it uses only the training split. We
-choose the depth that would have certified the most claims, by running
-the whole pipeline on the training split alone: halve it, fit model
-and tree on one half, test on the other, and average over five
-random halvings.
+**Depth does not dilute the tests above it.** The level at which
+trickle down tests a node depends only on the verdicts and weights of
+its ancestors, never on how many descendants the node has. Growing the
+tree adds hypotheses at the bottom and leaves the level of every
+existing one unchanged, with one exception: a former leaf, which
+staked its whole level because it had nothing to pass on, now stakes
+``effect_stake``, so its effect test runs at that fraction of the
+level it had (half, by default).
+Bonferroni is different: every hypothesis added anywhere dilutes the
+level of all the others.
 
-.. testcode::
+**The shallow tree is the top of the deep one.** CART is greedy, so
+for the same training data and ``min_samples_leaf`` the first :math:`k`
+layers of a deep tree are exactly the tree we would have got by
+stopping at depth :math:`k`. A deep tree loses none of a shallow
+tree's splits; it only adds splits beneath them.
 
-    depths = [1, 2, 3, 4]
-    certified = np.zeros(len(depths))
-    pilot = np.random.default_rng(0)
-    for _ in range(5):
-        half = pilot.random(len(y_train)) < 0.5
-        fit = (X_train[half], z_train[half], y_train[half])
-        check = (X_train[~half], z_train[~half], y_train[~half])
-        cate = fit_t_learner(*fit)(fit[0])
-        for i, depth in enumerate(depths):
-            root = to_uplift_tree(summary_tree(fit[0], cate, depth), fit, check)
-            claims = interweaved_hierarchy(root, alpha=0.05).test()
-            certified[i] += len(claims.certified()) / 5
-
-    for depth, count in zip(depths, certified):
-        print(f"depth {depth}: {count:.1f} claims certified on average")
-
-.. testoutput::
-
-    depth 1: 2.8 claims certified on average
-    depth 2: 5.0 claims certified on average
-    depth 3: 4.4 claims certified on average
-    depth 4: 4.2 claims certified on average
-
-Depth two wins. The criterion has two biases worth knowing. Each pilot
-fits and tests on a quarter of the data, while the real analysis fits
-on half and tests on the other half; with more data in both roles, a
-somewhat deeper tree may pay off, so the pilot may lean shallow. And
-five halvings of a single training split are still noisy; differences
-of a fraction of a claim mean little.
-
-A tempting alternative is to cross-validate the tree against the
-transformed outcome :math:`Y^* = Y (Z - p) / (p (1 - p))`, whose
-conditional mean is the treatment effect [AI16]_. It is valid, but
-:math:`Y^*` is so noisy at this signal-to-noise ratio that, across
-seeds of this very simulation, it chose depths from one to four almost
-at random. Fixing the depth in advance (the paper uses three) is also
-perfectly sound.
-
-Fitting the Final Tree
-----------------------
-
-With the depth chosen, fit the model and the tree on the whole
-training split:
+The tree's size is still limited by ``min_samples_leaf``, which stops
+it splitting nodes into pieces too small to say anything about.
 
 .. testcode::
 
     cate = fit_t_learner(X_train, z_train, y_train)(X_train)
-    tree = summary_tree(X_train, cate, depth=2)
-    print(export_text(tree, feature_names=FEATURES, decimals=1))
+    tree = summary_tree(X_train, cate)
+    print(f"depth {tree.get_depth()}, {tree.get_n_leaves()} leaves")
+    print(export_text(tree, feature_names=FEATURES, decimals=1, max_depth=1))
 
 .. testoutput::
     :options: +NORMALIZE_WHITESPACE
 
+    depth 6, 16 leaves
     |--- premium <= 0.5
     |   |--- tenure <= 9.5
-    |   |   |--- value: [6.2]
+    |   |   |--- truncated branch of depth 3
     |   |--- tenure >  9.5
-    |   |   |--- value: [2.4]
+    |   |   |--- truncated branch of depth 5
     |--- premium >  0.5
     |   |--- tenure <= 11.5
-    |   |   |--- value: [-1.4]
+    |   |   |--- truncated branch of depth 3
     |   |--- tenure >  11.5
-    |   |   |--- value: [-4.8]
+    |   |   |--- truncated branch of depth 4
 
-The tree recovers the plan split, and on the basic side a tenure
-split close to the true one at twelve months. On the premium side it
-has also split on tenure, though the true effect is :math:`-3`
-throughout; the gap between :math:`-1.4` and :math:`-4.8` is noise the
-model mistook for structure. Nothing on the training split can tell us
-that. The evaluation split can.
+``export_text`` prints only the first two layers here. The top of the
+tree recovers the plan split and, on the basic side, a tenure split close to the true
+one at twelve months. On the premium side it has also split on tenure,
+though the true effect is :math:`-3` throughout; the gap between the
+predictions is noise the model mistook for structure. Below that, the
+tree carries on splitting (on sessions and tenure, in the next layer)
+wherever that reduces the error in the predicted effects, whether or
+not the effect really varies there. Nothing on the training
+split can tell us which of these splits are real. The evaluation split
+can.
 
 Testing on the Evaluation Split
 -------------------------------
@@ -350,39 +320,41 @@ Now, and only now, touch the evaluation split:
         tree, (X_train, z_train, y_train), (X_eval, z_eval, y_eval)
     )
     claims = interweaved_hierarchy(root, alpha=0.05).test()
-    print(claims)
+    print(f"{len(claims.claims)} hypotheses, {len(claims.certified())} certified:")
+    for claim in claims.certified():
+        print(f"  - {claim.sentence()}")
 
 .. testoutput::
-    :options: +NORMALIZE_WHITESPACE
 
-    | node                              | kind          | alternative   |      p |   level | decision   |
-    |-----------------------------------+---------------+---------------+--------+---------+------------|
-    | everyone                          | effect        | greater       | 0.5985 |  0.025  | retained   |
-    | everyone                          | heterogeneity | less          | 0      |  0.0125 | rejected   |
-    | basic plan                        | effect        | greater       | 0.0051 |  0.0063 | rejected   |
-    | basic plan                        | heterogeneity | less          | 0.1343 |  0.0063 | retained   |
-    | basic plan, tenure < 10 months    | effect        | greater       | 0.0088 |  0.0031 | retained   |
-    | basic plan, tenure >= 10 months   | effect        | greater       | 0.0734 |  0.0031 | retained   |
-    | premium plan                      | effect        | less          | 0.0001 |  0.0063 | rejected   |
-    | premium plan                      | heterogeneity | less          | 0.8879 |  0.0063 | retained   |
-    | premium plan, tenure < 12 months  | effect        | less          | 0.0002 |  0.0031 | rejected   |
-    | premium plan, tenure >= 12 months | effect        | less          | 0.0079 |  0.0031 | retained   |
-
-    Certified at FWER 0.05:
+    46 hypotheses, 4 certified:
       - the effect is larger for basic plan than for premium plan
       - the effect is positive for basic plan
       - the effect is negative for premium plan
       - the effect is negative for premium plan, tenure < 12 months
 
-    Bounded, though not certified:
-      - the effect for everyone is above -1.15
-      - the effect for basic plan, tenure >= 10 months relative to basic plan, tenure < 10 months is below 1.93
-      - the effect for basic plan, tenure < 10 months is above -0.41
-      - the effect for basic plan, tenure >= 10 months is above -1.03
-      - the effect for premium plan, tenure >= 12 months relative to premium plan, tenure < 12 months is below 6.11
-      - the effect for premium plan, tenure >= 12 months is below 0.336
+``print(claims)`` would tabulate all of the hypotheses. Here are the
+six at the top of the tree, at its root and its first split:
 
-Read the table top to bottom, as the procedure does.
+.. testcode::
+
+    for claim in claims.claims:
+        if claim.depth <= 1:
+            verdict = "rejected" if claim.rejected else "retained"
+            print(
+                f"{claim.node:14} {claim.kind:14} {claim.alternative:8} "
+                f"p = {claim.pvalue:.4f}  level = {claim.level:.4f}  {verdict}"
+            )
+
+.. testoutput::
+
+    everyone       effect         greater  p = 0.5985  level = 0.0250  retained
+    everyone       heterogeneity  less     p = 0.0000  level = 0.0125  rejected
+    basic plan     effect         greater  p = 0.0051  level = 0.0063  rejected
+    basic plan     heterogeneity  less     p = 0.1343  level = 0.0063  retained
+    premium plan   effect         less     p = 0.0001  level = 0.0063  rejected
+    premium plan   heterogeneity  less     p = 0.8879  level = 0.0063  retained
+
+Read them top to bottom, as the procedure does.
 
 - **The overall effect is retained.** With :math:`p = 0.60` there is
   no evidence the discount helps on average, which is what an
@@ -394,27 +366,116 @@ Read the table top to bottom, as the procedure does.
   That rejection passes its whole level to the two plans, and both
   effects are then certified: the discount helps basic customers and
   harms premium ones.
-- **Neither tenure split is certified.** On the premium side that is
-  the right answer, since the split is spurious (:math:`p = 0.89`).
-  On the basic side it is a miss, a Type II error: the split is real,
-  but the test had a level of 0.006, and :math:`p = 0.13` falls well
-  short.
-- **Testing continues below both retentions.** The four leaves are
-  still tested, at 0.003 each, and one of them is certified: the
-  discount harms premium customers of under a year's tenure.
+- **Neither plan's tenure split is certified.** On the premium side
+  that is the right answer, since the split is spurious (:math:`p =
+  0.89`). On the basic side it is a miss, a Type II error: the split
+  is real, but :math:`p = 0.13` falls well short of its level.
+- **Testing continues below both retentions**, at ever smaller levels,
+  and one claim further down is certified: the discount harms premium
+  customers of under a year's tenure. That test ran at 0.0016. Had we
+  stopped the tree at depth two, the same node would have been a leaf
+  staking its whole level, tested at 0.0031. That factor of two, at
+  each of the depth-two tree's four leaves, is the whole price of
+  growing the tree, and here it cost nothing.
 
-The retained hypotheses still say something. The procedure's
-confidence bounds (§6) hold simultaneously with its rejections, so
-"the effect for everyone is above :math:`-1.15`" bounds the cost of
-rolling the discount out to everyone, even though we could not show it
-helps.
+No claim is certified about any node more than two splits down, which
+is how the procedure tells us that the tree's deeper splits are not
+supported by the evaluation split.
+
+Pruning
+-------
+
+Pruning turns the 46 verdicts into a tree a decision-maker can read.
+We keep a node's split if anything below it was certified, whether the
+split itself (its heterogeneity hypothesis) or a claim about any of its
+descendants, and cut it otherwise:
+
+.. testcode::
+
+    import dataclasses
+
+
+    def prune(node, claims):
+        """Cut every split below which nothing was certified."""
+        certified = {(claim.node, claim.kind) for claim in claims.certified()}
+
+        def anything_certified(node):
+            return (node.name, "effect") in certified or any(
+                anything_certified(child) for child in node.children
+            )
+
+        def cut(node):
+            keep = (node.name, "heterogeneity") in certified or any(
+                anything_certified(child) for child in node.children
+            )
+            children = [cut(child) for child in node.children] if keep else []
+            return dataclasses.replace(node, children=children)
+
+        return cut(node)
+
+
+    def show(node, claims, indent=0):
+        verdicts = [
+            claim.sentence()
+            for claim in claims.certified()
+            if claim.node == node.name
+        ]
+        print("  " * indent + f"{node.name} (n = {node.size}, effect {node.tau_hat:+.2f})")
+        for verdict in verdicts:
+            print("  " * indent + f"  * {verdict}")
+        for child in node.children:
+            show(child, claims, indent + 1)
+
+
+    pruned = prune(root, claims)
+    show(pruned, claims)
+
+.. testoutput::
+
+    everyone (n = 9924, effect -0.13)
+      * the effect is larger for basic plan than for premium plan
+      basic plan (n = 5953, effect +1.70)
+        * the effect is positive for basic plan
+      premium plan (n = 3971, effect -3.19)
+        * the effect is negative for premium plan
+        premium plan, tenure < 12 months (n = 1577, effect -4.52)
+          * the effect is negative for premium plan, tenure < 12 months
+        premium plan, tenure >= 12 months (n = 2394, effect -2.52)
+
+The premium split survives although its heterogeneity hypothesis was
+retained, because one of its halves carries a certified claim. The
+report should say as much: the effect is negative among premium
+customers of under a year's tenure, and we cannot say whether it
+differs from that among longer-tenured ones.
+
+Pruning is legitimate because it only chooses which certified claims
+to report, and the familywise guarantee covers every subset of them.
+What is *not* legitimate is to test the pruned tree again. Its new
+leaves would stake their whole level instead of half of it, and
+choosing which nodes get that boost after seeing the evaluation split
+is exactly the kind of peek the guarantee does not survive. Prune the
+report, not the hierarchy.
+
+The retained hypotheses still say something, too. The procedure's
+confidence bounds (§6) hold simultaneously with its rejections:
+
+.. testcode::
+
+    print(claims.claims[0].bound_sentence())
+
+.. testoutput::
+
+    the effect for everyone is above -1.15
+
+That bounds the cost of rolling the discount out to everyone, even
+though we could not show it helps.
 
 Checking Against the Truth
 --------------------------
 
 Because we simulated the data, we can see what each node's effect
-really is. ``node_names`` lines the tree's nodes up with ``decision_path``,
-so the true effect in each node is a mask away:
+really is. ``node_names`` lines the tree's nodes up with
+``decision_path``, so the true effect in each node is a mask away:
 
 .. testcode::
 
@@ -422,7 +483,7 @@ so the true effect in each node is a mask away:
     column = {name: i for i, name in enumerate(node_names(tree))}
     truth = true_effect(X_eval)
     print(f"{'node':34} {'train':>6} {'eval':>6} {'true':>6}")
-    for node in root.walk():
+    for node in pruned.walk():
         actual = truth[in_eval[:, column[node.name]]].mean()
         print(f"{node.name:34} {node.tau_train:+6.2f} {node.tau_hat:+6.2f} {actual:+6.2f}")
 
@@ -432,37 +493,26 @@ so the true effect in each node is a mask away:
     everyone                            +0.84  -0.13  +0.35
     basic plan                          +3.81  +1.70  +2.59
     premium plan                        -3.44  -3.19  -3.00
-    basic plan, tenure < 10 months      +6.22  +2.70  +5.00
-    basic plan, tenure >= 10 months     +2.59  +1.16  +1.35
     premium plan, tenure < 12 months    -1.51  -4.52  -3.00
     premium plan, tenure >= 12 months   -4.82  -2.52  -3.00
 
 All four certified claims are true, as they must be with probability
 at least 95%: trickle down bounds the chance that *any* certified
-claim is false by the familywise error rate. Two other features of the
-table are worth a look.
-
-The basic-plan tenure split was unlucky rather than hopeless. Its true
-contrast is :math:`5.00 - 1.35 = 3.65`, but the evaluation split
-estimates only :math:`2.70 - 1.16 = 1.54`. A different draw of the
-evaluation split would often certify it, and a larger one usually
-would.
+claim is false by the familywise error rate.
 
 The premium leaves show the winner's curse. The training split put
 them at :math:`-1.51` and :math:`-4.82`, because the tree chose the
 split that made them look most different; on the evaluation split the
-order reverses. The same bias inflates the training estimate for new
-basic customers (:math:`+6.22` against a truth of :math:`+5.00`).
-Estimates from the split that chose the tree are biased by the search
-that produced it, which is why the tree is fit on one split and
-tested on another [AI16]_. Here the bias was harmless, because
-``tau_train`` only chose directions, and the evaluation split refused
-the spurious split.
+order reverses. Estimates from the split that chose the tree are
+biased by the search that produced it, which is why the tree is fit on
+one split and tested on another [AI16]_. Here the bias was harmless,
+because ``tau_train`` only chose directions, and the evaluation split
+refused the spurious split.
 
 Comparing Procedures
 --------------------
 
-The same p-values give each comparator of §5 on this tree. Fixed
+The same p-values give each comparator of §5 on the full tree. Fixed
 Hierarchy is trickle down with every stake set to one:
 
 .. testcode::
@@ -492,11 +542,13 @@ Fixed Hierarchy certifies nothing: it stakes the root's whole level on
 the overall effect, and once that is retained everything below is
 tested at level zero. A near-null average effect concealing opposite
 effects in subgroups is exactly the case it cannot handle, and the one
-trickle down was designed for. Bonferroni tests each of the ten
-hypotheses at 0.005. It certifies the three claims with the smallest
-p-values and narrowly misses the basic-plan effect (:math:`p =
-0.0051`), which trickle down certifies at 0.0063 because the plan
-split's rejection passed its whole level down.
+trickle down was designed for. Bonferroni tests each of the 46
+hypotheses at :math:`0.05 / 46 \approx 0.0011`. It certifies the three
+claims with the smallest p-values and misses the basic-plan effect
+(:math:`p = 0.0051`), which trickle down certifies at 0.0063 because
+the plan split's rejection passed its whole level down. Unlike trickle
+down, Bonferroni would gain from a shallower tree: at depth two it
+tests ten hypotheses at 0.005, and still just misses that claim.
 
 This is one draw from one data-generating process. Trickle down does
 not dominate Bonferroni on every dataset, since it can spend a lot of
@@ -507,13 +559,15 @@ thousands of replications.
 Checklist
 ---------
 
-- Split before you look. Fit the model, choose the tree and its depth,
-  and compute ``tau_train`` on the training split only.
-- Test once. Rerunning with a different tree after seeing the
-  evaluation results voids the guarantee; if you must iterate, the
+- Split before you look. Fit the model and the tree, and compute
+  ``tau_train``, on the training split only.
+- Grow deep and prune the report. Under trickle down, depth costs
+  only a factor of ``effect_stake`` at what would have been the leaves;
+  ``min_samples_leaf`` keeps the tree from splitting into pieces too
+  small to test.
+- Test once. Retesting a pruned tree, or a different tree, after seeing
+  the evaluation results voids the guarantee; if you must iterate, the
   evaluation split has become training data and you need a new one.
-- Keep leaves large enough to test. A leaf with a level of 0.003 needs
-  a big effect or a big sample; ``min_samples_leaf`` is the guard.
 - Name nodes so the claims read as sentences, and keep the names
   unique; ``interweaved_hierarchy`` raises on duplicates.
 - Report the bounds as well as the rejections. A retained hypothesis
