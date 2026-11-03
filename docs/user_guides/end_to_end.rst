@@ -430,39 +430,68 @@ cut it otherwise:
         return cut(node)
 
 
+    pruned = prune(root, claims)
+
+The pruned tree is the analysis's result. To present it, we list under
+each node what the evaluation split certified about it, and, for each
+hypothesis it retained, the confidence bound of §6. Those bounds hold
+simultaneously with the certified claims. Indentation shows the path,
+so each node is labeled by its last split alone; ``[A] - [B]`` is the
+effect in node A minus the effect in node B. A heterogeneity
+hypothesis is listed only if its split survived the pruning.
+
+.. testcode::
+
+    def label(name):
+        return name.split(", ")[-1]
+
+
+    def verdict(claim):
+        low, high = claim.reportable_bound
+        if claim.kind == "effect":
+            quantity = "effect"
+        else:
+            quantity = f"[{label(claim.right)}] - [{label(claim.left)}]"
+        if claim.alternative == "greater":
+            return f"{quantity} > {low:.3g}"
+        return f"{quantity} < {high:.3g}"
+
+
     def show(node, claims, indent=0):
-        verdicts = [
-            claim.sentence()
-            for claim in claims.certified()
-            if claim.node == node.name
-        ]
-        print("  " * indent + f"{node.name} (n = {node.size}, effect {node.tau_hat:+.2f})")
-        for verdict in verdicts:
-            print("  " * indent + f"  * {verdict}")
+        pad = "    " * indent
+        print(f"{pad}{label(node.name)}: n = {node.size}, estimated effect {node.tau_hat:+.2f}")
+        for claim in claims.claims:
+            if claim.node != node.name:
+                continue
+            if claim.kind == "heterogeneity" and not node.children:
+                continue  # its split was pruned away
+            status = "certified" if claim.rejected else "bounded"
+            print(f"{pad}  {status:9}  {verdict(claim)}")
         for child in node.children:
             show(child, claims, indent + 1)
 
 
-    pruned = prune(root, claims)
     show(pruned, claims)
 
 .. testoutput::
 
-    everyone (n = 9924, effect -0.13)
-      * the effect is larger for basic plan than for premium plan
-      basic plan (n = 5953, effect +1.70)
-        * the effect is positive for basic plan
-      premium plan (n = 3971, effect -3.19)
-        * the effect is negative for premium plan
-        premium plan, tenure < 12 months (n = 1577, effect -4.52)
-          * the effect is negative for premium plan, tenure < 12 months
-        premium plan, tenure >= 12 months (n = 2394, effect -2.52)
+    everyone: n = 9924, estimated effect -0.13
+      bounded    effect > -1.15
+      certified  [premium plan] - [basic plan] < 0
+        basic plan: n = 5953, estimated effect +1.70
+          certified  effect > 0
+        premium plan: n = 3971, estimated effect -3.19
+          certified  effect < 0
+          bounded    [tenure >= 12 months] - [tenure < 12 months] < 6.11
+            tenure < 12 months: n = 1577, estimated effect -4.52
+              certified  effect < 0
+            tenure >= 12 months: n = 2394, estimated effect -2.52
+              bounded    effect < 0.567
 
-The premium split survives although its heterogeneity hypothesis was
-retained, because one of its halves carries a certified claim. The
-report should say as much: the effect is negative among premium
-customers of under a year's tenure, and we cannot say whether it
-differs from that among longer-tenured ones.
+The estimated effects are the evaluation split's differences in arm
+means. Because the tree was chosen on the other split, they are
+unbiased for each node, but they are point estimates and carry no
+simultaneous guarantee; the certified and bounded sentences do.
 
 Pruning is legitimate because it only chooses which claims to report,
 and the familywise guarantee covers every subset of them.
@@ -472,19 +501,62 @@ choosing which nodes get that boost after seeing the evaluation split
 is exactly the kind of peek the guarantee does not survive. Prune the
 report, not the hierarchy.
 
-The retained hypotheses still say something, too. The procedure's
-confidence bounds (§6) hold simultaneously with its rejections:
+Findings
+--------
 
-.. testcode::
+Here is what the analysis lets us tell the decision-maker, with the
+familywise error rate held at 5% across every statement together.
 
-    print(claims.claims[0].bound_sentence())
+**A blanket rollout is not supported.** We cannot show that the
+discount raises spend on average (:math:`p = 0.60`). We can bound the
+downside: the average effect is above :math:`-1.15` per customer.
 
-.. testoutput::
+**The discount helps basic-plan customers and hurts premium ones.**
+Both signs are certified, and so is the difference between the two
+plans. This is the finding that matters, and it is invisible in the
+average: the two plans' effects nearly cancel.
 
-    the effect for everyone is above -1.15
+**Premium customers in their first year are harmed.** The harm among
+premium customers under twelve months' tenure is certified on its
+own. For longer-tenured premium customers we cannot certify harm, but
+the effect is below :math:`+0.57`, so there is no meaningful benefit
+to be had there either. Nothing in the data argues for discounting any
+premium customer.
 
-That bounds the cost of rolling the discount out to everyone, even
-though we could not show it helps.
+**The recommendation follows**: offer the discount to basic-plan
+customers and withhold it from premium ones.
+
+What the analysis does *not* support matters as much:
+
+- **Magnitudes.** A certified effect claim establishes a sign, not a
+  size. A rejected hypothesis may claim only its threshold, because
+  its level has already passed to its children (§6), so "the effect
+  is positive for basic plan" is all we may say there; the bounds of
+  §6 come only with retained hypotheses. If the discount
+  costs money, set ``delta`` to the break-even uplift and the claims
+  become "the effect exceeds the break-even point".
+- **Tenure within the basic plan.** The model suggested new basic
+  customers respond more strongly, and the tree split on tenure, but
+  the evaluation split did not certify the split (:math:`p = 0.13`),
+  and pruning removed it. We should not tell anyone to target new
+  basic customers in particular.
+- **Tenure within the premium plan.** The premium split survives the
+  pruning only because one of its halves carries a certified claim.
+  Its heterogeneity hypothesis was retained (:math:`p = 0.89`), and
+  its bound, that the longer-tenured half's effect exceeds the newer
+  half's by less than 6.11, rules out almost nothing. We cannot say
+  whether newer and longer-tenured premium customers respond
+  differently, only that the newer ones are harmed.
+- **Other splits.** The full tree carried 36 more hypotheses, about
+  nodes the pruning removed, and none was certified. The model's finer
+  structure, splits on sessions and on tenure further down, is
+  unsupported.
+
+One caveat applies to all of it. These conclusions are conditional on
+one random split of the data into training and evaluation halves,
+which "may lead two analysts to draw different conclusions about
+treatment effects" (§8). The guarantee covers the error rate of the procedure,
+not the variability across splits.
 
 Checking Against the Truth
 --------------------------
@@ -512,9 +584,23 @@ really is. ``node_names`` lines the tree's nodes up with
     premium plan, tenure < 12 months    -1.51  -4.52  -3.00
     premium plan, tenure >= 12 months   -4.82  -2.52  -3.00
 
-All four certified claims are true, as they must be with probability
-at least 95%: trickle down bounds the chance that *any* certified
-claim is false by the familywise error rate.
+All four certified claims are true, and so are the bounds: the overall
+effect (:math:`+0.35`) is above :math:`-1.15`, and that of
+longer-tenured premium customers (:math:`-3.00`) is below
+:math:`+0.57`. They had to be, with probability at least 95%: trickle
+down bounds the chance that *any* certified claim or reported bound is
+false by the familywise error rate. The recommendation is right too.
+The true effects are :math:`+2.59` on the basic plan and :math:`-3.00`
+on premium, so targeting basic customers gains about :math:`2.59
+\times 0.60 \approx 1.55` per customer in the population, against
+:math:`0.35` for a blanket rollout.
+
+The miss is the basic plan's tenure split. New basic customers really
+do respond more (:math:`+5.00` against :math:`+1.35` beyond ten
+months), but the evaluation split estimated a contrast of :math:`1.54`
+where the truth is :math:`3.65`, and the test had a level of 0.006.
+That is a Type II error, the price of controlling the familywise rate
+at a sample size this noisy.
 
 The premium leaves show the winner's curse. The training split put
 them at :math:`-1.51` and :math:`-4.82`, because the tree chose the
