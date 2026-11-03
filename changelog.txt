@@ -1,8 +1,8 @@
 2026-11-03 : End-to-end user guide
 - Added docs/user_guides/end_to_end.rst: simulate an experiment, fit a
   T-learner, distill it into a deep decision tree, test it with
-  trickle down, and prune the report to what was certified. Its
-  examples run as doctests.
+  trickle down, and prune the report to what was certified, as in
+  Wilson (2026), sections 5.2 and 7.1. Its examples run as doctests.
 
 2026-11-02 : Release 0.2.0
 - First release under the paper's effect/heterogeneity names (see

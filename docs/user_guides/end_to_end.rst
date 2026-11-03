@@ -251,10 +251,13 @@ the training split; a poor choice costs power, never validity.
 How Deep? Grow, Then Prune
 --------------------------
 
-How deep should the tree be? Under trickle down the question needs no
-tuning, as [Wil26]_ discusses: grow the tree as deep as
-``min_samples_leaf`` allows, let the procedure find where the evidence
-runs out, and prune what lies beyond. Two facts make this work.
+How deep should the tree be? The paper's answer is that the question
+needs no tuning: "there is no reason to control the tree depth when
+constructing the tree on the training set" (§5.2), and "the method
+works with arbitrarily deep trees and offers a disciplined pruning
+strategy" (§7.1). Grow the tree as deep as ``min_samples_leaf``
+allows, let the procedure find where the evidence runs out, and prune
+what lies beyond. Two facts make this work.
 
 **Depth does not dilute the tests above it.** The level at which
 trickle down tests a node depends only on the verdicts and weights of
@@ -263,9 +266,11 @@ tree adds hypotheses at the bottom and leaves the level of every
 existing one unchanged, with one exception: a former leaf, which
 staked its whole level because it had nothing to pass on, now stakes
 ``effect_stake``, so its effect test runs at that fraction of the
-level it had (half, by default).
+level it had (half, by default). This is the paper's "no risk of
+sacrificing reliability or power (except at the leaves)" (§7.3).
 Bonferroni is different: every hypothesis added anywhere dilutes the
-level of all the others.
+level of all the others, which makes it "useless in deep trees whose
+hypothesis count doubles with each new level" (§7.3).
 
 **The shallow tree is the top of the deep one.** CART is greedy, so
 for the same training data and ``min_samples_leaf`` the first :math:`k`
@@ -273,8 +278,10 @@ layers of a deep tree are exactly the tree we would have got by
 stopping at depth :math:`k`. A deep tree loses none of a shallow
 tree's splits; it only adds splits beneath them.
 
-The tree's size is still limited by ``min_samples_leaf``, which stops
-it splitting nodes into pieces too small to say anything about.
+The tree's size is still limited by ``min_samples_leaf``, which "ensures
+the sample size is large enough to run the associated tests" (§7.1).
+The paper uses a hundredth of the sample; we use a twentieth, which
+keeps this guide's tree small enough to read.
 
 .. testcode::
 
@@ -386,9 +393,17 @@ Pruning
 -------
 
 Pruning turns the 46 verdicts into a tree a decision-maker can read.
-We keep a node's split if anything below it was certified, whether the
-split itself (its heterogeneity hypothesis) or a claim about any of its
-descendants, and cut it otherwise:
+The power available deep in the tree falls exponentially, so "at some
+point, we will retain *all* hypotheses below a certain depth. We may
+prune these nodes, leaving a shallower tree emphasizing the certified
+claims" (§5.2). Here that depth is two, and pruning below it leaves
+the depth-two tree.
+
+We can go a step further and prune branch by branch rather than layer
+by layer, since the basic-plan side has nothing certified below its
+first split. We keep a node's split if anything below it was
+certified, whether the split itself (its heterogeneity hypothesis) or a
+claim about any of its descendants, and cut it otherwise:
 
 .. testcode::
 
@@ -448,8 +463,9 @@ report should say as much: the effect is negative among premium
 customers of under a year's tenure, and we cannot say whether it
 differs from that among longer-tenured ones.
 
-Pruning is legitimate because it only chooses which certified claims
-to report, and the familywise guarantee covers every subset of them.
+Either way of pruning is legitimate, because it only chooses which
+claims to report, and the familywise guarantee covers every subset of
+them.
 What is *not* legitimate is to test the pruned tree again. Its new
 leaves would stake their whole level instead of half of it, and
 choosing which nodes get that boost after seeing the evaluation split
