@@ -1,3 +1,9 @@
+2026-11-03 : End-to-end user guide
+- Added docs/user_guides/end_to_end.rst: simulate an experiment, fit a
+  T-learner, distill it into a decision tree, choose the depth on the
+  training split, and test the tree with trickle down. Its examples
+  run as doctests.
+
 2026-11-02 : Release 0.2.0
 - First release under the paper's effect/heterogeneity names (see
   below); the renamed arguments make this a breaking release for 0.1.0

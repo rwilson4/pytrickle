@@ -58,6 +58,11 @@ and `~/Projects/PairMatch`) is served at
 https://convexanalytics.com/trickle-down/.
 - `docs/user_guides/usage.md` includes `trickle_down/USAGE.md` through
   MyST, so the usage guide has one source.
+- `docs/user_guides/end_to_end.rst` runs the whole workflow on
+  simulated data as doctests: a scikit-learn T-learner, a summary
+  tree whose depth is chosen on the training split, and trickle down
+  on the evaluation split. Its outputs are pinned by `uv.lock`; a
+  scikit-learn upgrade can change them.
 - `docs/user_guides/reproducing_the_paper.rst` recomputes the paper's
   exact results (Table 1) as doctests, and shows the simulation study
   beside the paper's numbers.
