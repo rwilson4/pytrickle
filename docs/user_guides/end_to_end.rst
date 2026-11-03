@@ -396,14 +396,15 @@ Pruning turns the 46 verdicts into a tree a decision-maker can read.
 The power available deep in the tree falls exponentially, so "at some
 point, we will retain *all* hypotheses below a certain depth. We may
 prune these nodes, leaving a shallower tree emphasizing the certified
-claims" (§5.2). Here that depth is two, and pruning below it leaves
-the depth-two tree.
+claims" (§5.2).
 
-We can go a step further and prune branch by branch rather than layer
-by layer, since the basic-plan side has nothing certified below its
-first split. We keep a node's split if anything below it was
-certified, whether the split itself (its heterogeneity hypothesis) or a
-claim about any of its descendants, and cut it otherwise:
+Prune branch by branch rather than layer by layer. Evidence runs out
+at different depths in different branches: here nothing is certified
+below the basic plan's first split, while the premium side has a
+certified claim one split further down. So we keep a node's split if
+anything below it was certified, whether the split itself (its
+heterogeneity hypothesis) or a claim about any of its descendants, and
+cut it otherwise:
 
 .. testcode::
 
@@ -463,9 +464,8 @@ report should say as much: the effect is negative among premium
 customers of under a year's tenure, and we cannot say whether it
 differs from that among longer-tenured ones.
 
-Either way of pruning is legitimate, because it only chooses which
-claims to report, and the familywise guarantee covers every subset of
-them.
+Pruning is legitimate because it only chooses which claims to report,
+and the familywise guarantee covers every subset of them.
 What is *not* legitimate is to test the pruned tree again. Its new
 leaves would stake their whole level instead of half of it, and
 choosing which nodes get that boost after seeing the evaluation split
@@ -577,10 +577,10 @@ Checklist
 
 - Split before you look. Fit the model and the tree, and compute
   ``tau_train``, on the training split only.
-- Grow deep and prune the report. Under trickle down, depth costs
-  only a factor of ``effect_stake`` at what would have been the leaves;
-  ``min_samples_leaf`` keeps the tree from splitting into pieces too
-  small to test.
+- Grow deep, then prune the report branch by branch. Under trickle
+  down, depth costs only a factor of ``effect_stake`` at what would
+  have been the leaves; ``min_samples_leaf`` keeps the tree from
+  splitting into pieces too small to test.
 - Test once. Retesting a pruned tree, or a different tree, after seeing
   the evaluation results voids the guarantee; if you must iterate, the
   evaluation split has become training data and you need a new one.
